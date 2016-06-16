@@ -1,7 +1,7 @@
 <!DOCTYPE openRPTDef>
 <report>
  <title>1099 Info</title>
- <name>1099 Info</name>
+ <name>1099Info</name>
  <description>Report for 1099 information</description>
  <parameter default="1/1/11" active="true" listtype="static" type="string" name="fromdate">
   <description></description>

@@ -22,7 +22,7 @@ BEGIN
                      CASE WHEN (fetchMetricBool('RequireSOReservations'))
                           THEN itemuomtouom(itemsite_item_id, NULL, coitem_qty_uom_id, coitem_qtyreserved)
                           ELSE noNeg( coitem_qtyord - coitem_qtyshipped + coitem_qtyreturned - qtyAtShipping('SO', coitem_id) )
-                     END AS _balance
+                     END AS balance
 	      FROM coitem LEFT OUTER JOIN (itemsite JOIN item ON (itemsite_item_id=item_id)) ON (coitem_itemsite_id=itemsite_id)
 	      WHERE ( (coitem_status NOT IN ('C','X'))
                 AND (item_type != 'K')

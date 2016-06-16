@@ -50,7 +50,7 @@ BEGIN
   EXECUTE _qry INTO _taxhistid;
 
   -- Check for VAT Reverse charges and post opposing entry (applies to purchases only)
-  if (pTableName IN ('apopentax', 'voitemtax')) THEN
+  if ((_taxhistid IS NOT NULL) AND (pTableName IN ('apopentax', 'voitemtax'))) THEN
     IF (EXISTS(SELECT 1 FROM taxass 
                   WHERE ((taxass_reverse_tax) 
                   AND (COALESCE(taxass_taxzone_id, -1) = pTaxZoneId)

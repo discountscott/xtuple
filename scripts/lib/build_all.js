@@ -137,7 +137,7 @@ var _ = require('underscore'),
             // data if it's a plv8-free build
             populateData: options.populateData ||
               (options.source &&
-              options.source.indexOf("postbooks_demo_data.sql") >= 0 &&
+              options.source.indexOf("demo_data.sql") >= 0 &&
               !_.isEqual(options.extensions, ["foundation-database"])),
             wipeViews: options.wipeViews,
             clientOnly: options.clientOnly,
@@ -197,7 +197,7 @@ var _ = require('underscore'),
       buildSpecs.npmDev = options.npmDev;
       buildSpecs.populateData = options.populateData ||
         (options.source &&
-         options.source.indexOf("postbooks_demo_data.sql") >= 0 &&
+         options.source.indexOf("demo_data.sql") >= 0 &&
          options.extension !== "foundation-database");
       buildSpecs.wipeViews = options.wipeViews;
       buildSpecs.clientOnly = options.clientOnly;
@@ -221,7 +221,7 @@ var _ = require('underscore'),
           npmDev: options.npmDev,
           keepSql: options.keepSql,
           populateData: options.populateData ||
-            (options.source && options.source.indexOf("postbooks_demo_data.sql") >= 0),
+            (options.source && options.source.indexOf("demo_data.sql") >= 0),
           wipeViews: options.wipeViews,
           clientOnly: options.clientOnly,
           databaseOnly: options.databaseOnly,

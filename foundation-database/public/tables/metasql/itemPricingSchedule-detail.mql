@@ -17,22 +17,8 @@ SELECT ipsitem_id AS id, 1 AS altid,
        (COALESCE(ipsitem_fixedamtdiscount, 0.0) + 0.00) AS fixedAmt,
        noNeg(CASE WHEN (ipsitem_item_id IS NULL) THEN
                    NULL
-                  WHEN (ipsitem_type='N') THEN
-                   ipsitem_price
-                  WHEN (ipsitem_type='D') THEN
-                   (item_listprice - (item_listprice * COALESCE(ipsitem_discntprcnt, 0.0)) - COALESCE(ipsitem_fixedamtdiscount, 0.0))
-                  WHEN ((ipsitem_type = 'M') AND fetchMetricBool('Long30Markups') AND fetchMetricBool('WholesalePriceCosting')) THEN
-                   (item_listcost / (1.0 - ipsitem_discntprcnt) + ipsitem_fixedamtdiscount)
-                  WHEN ((ipsitem_type = 'M') AND fetchMetricBool('Long30Markups')) THEN
-                   (itemCost(itemsite_id) / itemuomtouomratio(item_id, ipsitem_qty_uom_id, ipsitem_price_uom_id) /
-                   (1.0 - ipsitem_discntprcnt) + ipsitem_fixedamtdiscount)
-                  WHEN (ipsitem_type = 'M' AND fetchMetricBool('WholesalePriceCosting')) THEN
-                   (item_listcost + (item_listcost * ipsitem_discntprcnt) + ipsitem_fixedamtdiscount)
-                  WHEN (ipsitem_type = 'M') THEN
-                   (itemCost(itemsite_id) / itemuomtouomratio(item_id, ipsitem_qty_uom_id, ipsitem_price_uom_id) +
-                    (itemCost(itemsite_id) / itemuomtouomratio(item_id, ipsitem_qty_uom_id, ipsitem_price_uom_id) * ipsitem_discntprcnt) +
-                    ipsitem_fixedamtdiscount)
-                  ELSE 0.0
+                  ELSE
+                   calcIpsitemPrice(ipsitem_id, ipsitem_item_id, <? value("warehous_id") ?>, item_listprice, CURRENT_DATE)
              END) AS netPrice,
        CASE WHEN (ipsitem_type='N') THEN <? value("nominal") ?>
             WHEN (ipsitem_type='D') THEN <? value("discount") ?>
@@ -48,12 +34,12 @@ SELECT ipsitem_id AS id, 1 AS altid,
        'qty' AS qtybreak_xtnumericrole,
        'salesprice' AS netPrice_xtnumericrole,
        'salesprice' AS price_xtnumericrole
-FROM ipsiteminfo LEFT OUTER JOIN item ON (item_id=ipsitem_item_id)
-                 LEFT OUTER JOIN prodcat ON (prodcat_id=ipsitem_prodcat_id)
-                 LEFT OUTER JOIN uom AS qty ON (qty.uom_id=ipsitem_qty_uom_id)
-                 LEFT OUTER JOIN uom AS price ON (price.uom_id=ipsitem_price_uom_id)
-                 LEFT OUTER JOIN itemsite ON (itemsite_item_id=item_id AND itemsite_warehous_id=<? value("warehous_id") ?>)
-WHERE (ipsitem_ipshead_id=<? value("ipshead_id") ?>)
+FROM ipshead JOIN ipsiteminfo ON (ipsitem_ipshead_id=ipshead_id)
+             LEFT OUTER JOIN item ON (item_id=ipsitem_item_id)
+             LEFT OUTER JOIN prodcat ON (prodcat_id=ipsitem_prodcat_id)
+             LEFT OUTER JOIN uom AS qty ON (qty.uom_id=ipsitem_qty_uom_id)
+             LEFT OUTER JOIN uom AS price ON (price.uom_id=ipsitem_price_uom_id)
+WHERE (ipshead_id=<? value("ipshead_id") ?>)
 
 UNION
 

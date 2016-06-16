@@ -27,6 +27,8 @@ DECLARE
   _wipPost       NUMERIC;
   _woNumber      TEXT;
   _ucost         NUMERIC;
+  _prevItemsite  INTEGER;
+  _prevQty       NUMERIC;
 
 BEGIN
 
@@ -83,7 +85,9 @@ BEGIN
   END IF;
 
   IF (pBackflush) THEN
-    FOR _r IN SELECT womatl_id, womatl_qtyiss +
+    _prevItemsite := 0;
+    _prevQty := 0.0;
+    FOR _r IN SELECT itemsite_id, womatl_id, womatl_qtyiss +
 		     (CASE
 		       WHEN (womatl_qtywipscrap >  ((womatl_qtyfxd + (_parentQty + wo_qtyrcv) * womatl_qtyper) * womatl_scrap)) THEN
                          (womatl_qtyfxd + (_parentQty + wo_qtyrcv) * womatl_qtyper) * womatl_scrap
@@ -100,7 +104,12 @@ BEGIN
       -- Don't issue more than should have already been consumed at this point
       IF (pQty > 0) THEN
         IF (noNeg(_r.expected - _r.consumed) > 0) THEN
-          SELECT issueWoMaterial(_r.womatl_id, noNeg(_r.expected - _r.consumed), _itemlocSeries, pGlDistTS) INTO _itemlocSeries;
+          IF (_r.itemsite_id != _prevItemsite) THEN
+            _prevQty := 0.0;
+          END IF;
+          SELECT issueWoMaterial(_r.womatl_id, noNeg(_r.expected - _r.consumed), _itemlocSeries, pGlDistTS, _prevQty) INTO _itemlocSeries;
+          _prevItemsite := _r.itemsite_id;
+          _prevQty := _prevQty+noNeg(_r.expected - _r.consumed);
         END IF;
       ELSE
         -- Used by postMiscProduction of disassembly
@@ -148,7 +157,7 @@ BEGIN
                        'W/O', 'WO', _woNumber, '', ('Receive Inventory ' || item_number || ' ' || _sense || ' Manufacturing'),
                        costcat_asset_accnt_id, getPrjAccntId(wo_prj_id, costcat_wip_accnt_id), _itemlocSeries, pGlDistTS,
                        -- the following is only actually used when the item is average or job costed
-                       _wipPost ) INTO _invhistid
+                       _wipPost, NULL, 0.0 ) INTO _invhistid
   FROM wo, itemsite, item, costcat
   WHERE ( (wo_itemsite_id=itemsite_id)
    AND (itemsite_item_id=item_id)

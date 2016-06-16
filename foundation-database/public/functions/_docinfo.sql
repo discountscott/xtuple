@@ -84,7 +84,7 @@ BEGIN
                        target_doc_name,
                        target_doc_descrip,
                        _target.docass_purpose
-                  FROM _getTargetDocument(_target.docass_id, _target.source_id)
+                  FROM _getTargetDocument(_target.docass_id, _target.source_id, pRefId)
      LOOP
        RETURN NEXT _row;
     END LOOP;

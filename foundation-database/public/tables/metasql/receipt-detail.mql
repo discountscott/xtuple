@@ -7,11 +7,11 @@
 <? if exists("pohead_id") ?>
 SELECT poitem_id AS orderitem_id, COALESCE(poitem_itemsite_id,-1) AS itemsite_id, poitem_linenumber AS linenumber,
        poitem_duedate AS duedate,
-       COALESCE(item_number, <? value("nonInventory") ?>) AS item_number,
-       CASE WHEN (LENGTH(TRIM(BOTH '    ' FROM poitem_vend_item_descrip)) <= 0) THEN
+       COALESCE(item_number, expcat_code) AS item_number,
+       COALESCE(CASE WHEN (LENGTH(TRIM(BOTH '    ' FROM poitem_vend_item_descrip)) <= 0) THEN
                  (item_descrip1 || ' ' || item_descrip2)
             ELSE poitem_vend_item_descrip
-       END AS itemdescription,
+       END, expcat_descrip) AS itemdescription,
        COALESCE(uom_name, <? value("na") ?>) AS inv_uom,
        warehous_code,
        poitem_vend_item_number AS vend_item_number,
@@ -35,6 +35,7 @@ FROM poitem
   LEFT OUTER JOIN uom ON (item_inv_uom_id=uom_id)
   LEFT OUTER JOIN whsinfo ON (itemsite_warehous_id=warehous_id)
   LEFT OUTER JOIN itemsrc ON (itemsrc_id=poitem_itemsrc_id)
+  LEFT OUTER JOIN expcat ON (poitem_expcat_id=expcat_id)
 WHERE ( (poitem_status <> 'C')
 <? if exists("selectedOnly") ?>
  AND (usrsite_username=getEffectiveXtUser()) 

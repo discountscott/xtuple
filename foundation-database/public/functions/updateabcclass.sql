@@ -40,6 +40,7 @@ BEGIN
   WHERE ( (itemsite_item_id=item_id)
    AND (item_classcode_id=classcode_id)
    AND (itemsite_autoabcclass)
+   AND (itemsite_active)
    AND (classcode_code ~ pClassCodePattern)
    AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) );
 
@@ -53,6 +54,7 @@ BEGIN
     WHERE ( (itemsite_item_id=item_id)
      AND (item_classcode_id=classcode_id)
      AND (itemsite_autoabcclass)
+     AND (itemsite_active)
      AND (classcode_code ~ pClassCodePattern)
      AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) );
 
@@ -64,6 +66,7 @@ BEGIN
      AND (invhist_analyze)
      AND (invhist_transtype ~ '^[IR]')
      AND (itemsite_autoabcclass)
+     AND (itemsite_active)
      AND (classcode_code ~ pClassCodePattern)
      AND (invhist_transdate::DATE BETWEEN pStartDate AND pEndDate)
      AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) );
@@ -85,6 +88,7 @@ BEGIN
                         AND (invhist_analyze)
                         AND (invhist_transtype ~ '^[IR]')
                         AND (itemsite_autoabcclass)
+                        AND (itemsite_active)
                         AND (classcode_code ~ pClassCodePattern)
                         AND (invhist_transdate::DATE BETWEEN pStartDate AND pEndDate)
                         AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) )
@@ -166,6 +170,8 @@ BEGIN
   SELECT COUNT(*) INTO _updateCount
   FROM itemsite, item
   WHERE ( (itemsite_item_id=item_id)
+   AND (itemsite_autoabcclass)
+   AND (itemsite_active)
    AND ((item_classcode_id=pClasscodeid) OR (pClasscodeid=-1))
    AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) );
 
@@ -177,6 +183,8 @@ BEGIN
     SET itemsite_abcclass='T'
     FROM item
     WHERE ( (itemsite_item_id=item_id)
+     AND (itemsite_autoabcclass)
+     AND (itemsite_active)
      AND ((item_classcode_id=pClasscodeid) OR (pClasscodeid=-1))
      AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) );
 
@@ -186,6 +194,8 @@ BEGIN
      AND (itemsite_item_id=item_id)
      AND (invhist_analyze)
      AND (invhist_transtype ~ '^[IR]')
+     AND (itemsite_autoabcclass)
+     AND (itemsite_active)
      AND ((item_classcode_id=pClasscodeid) OR (pClasscodeid=-1))
      AND (invhist_transdate::DATE BETWEEN pStartDate AND pEndDate)
      AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) );
@@ -205,6 +215,8 @@ BEGIN
                         AND (itemsite_item_id=item_id)
                         AND (invhist_analyze)
                         AND (invhist_transtype ~ '^[IR]')
+                        AND (itemsite_autoabcclass)
+                        AND (itemsite_active)
                         AND ((item_classcode_id=pClasscodeid) OR (pClasscodeid=-1))
                         AND (invhist_transdate::DATE BETWEEN pStartDate AND pEndDate)
                         AND ((itemsite_warehous_id=pWarehousid) OR (pWarehousid=-1)) )

@@ -214,7 +214,7 @@ SELECT cashrcpt_id AS id, 0 AS type, cashrcpt_number,
        (cashrcpt_amount / cashrcpt_curr_rate) AS base_applied,
        currConcat(cashrcpt_curr_id) AS currAbbr,
        cashrcpt_distdate AS sortdate,
-       0 AS base_applied_xttotalrole,
+       CASE WHEN (cashrcpt_void) THEN -1 ELSE 0 END AS base_applied_xttotalrole,
        -1 AS arapply_id
 FROM cashrcpt 
 LEFT OUTER JOIN custinfo ON (cust_id=cashrcpt_cust_id) 

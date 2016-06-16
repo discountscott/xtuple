@@ -25,5 +25,10 @@ WHERE ( (ipshead_id NOT IN (
 <? if not exists("showCurrent") ?>
   AND (CURRENT_DATE NOT BETWEEN ipshead_effective AND ipshead_expires -1)
 <? endif ?>
+<? if exists("listpricesched") ?>
+  AND (ipshead_listprice)
+<? else ?>
+  AND (NOT ipshead_listprice)
+<? endif ?>
  )
 ORDER BY ipshead_effective, ipshead_name;

@@ -1,13 +1,12 @@
-CREATE OR REPLACE FUNCTION deleteProfitCenter(INTEGER) RETURNS INTEGER AS '
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple. 
+CREATE OR REPLACE FUNCTION deleteProfitCenter(INTEGER) RETURNS INTEGER AS $$
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple. 
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   pid ALIAS FOR $1;
-
 BEGIN
   IF (EXISTS(SELECT accnt_id
              FROM accnt, prftcntr
-             WHERE ((accnt_company=prftcntr_number)
+             WHERE ((accnt_profit=prftcntr_number)
                AND  (prftcntr_id=pid))
             )) THEN
     RETURN -1;
@@ -19,4 +18,4 @@ BEGIN
   RETURN pid;
 
 END;
-' LANGUAGE 'plpgsql';
+$$ LANGUAGE plpgsql;

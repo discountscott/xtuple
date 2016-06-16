@@ -400,7 +400,7 @@ FROM (
              item_id AS itemid, 0 AS sourcetype,
              <? value("listPrice") ?> AS schedulename, <? value("na") ?> AS type,
              '' AS typename,
-             -1 AS qtybreak, item_listprice AS price, baseCurrId() AS curr_id
+             -1 AS qtybreak, <? value("list") ?> AS price, baseCurrId() AS curr_id
 <? else ?>
              item_id AS itemid, 0 AS sourcetype,
              '' AS schedulename, <? value("listPrice") ?> AS type,

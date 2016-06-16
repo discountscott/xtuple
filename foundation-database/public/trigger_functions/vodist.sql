@@ -1,34 +1,12 @@
-CREATE OR REPLACE FUNCTION _vodistBeforeTrigger() RETURNS "trigger" AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple. 
--- See www.xtuple.com/CPAL for the full text of the software license.
-DECLARE
-
-BEGIN
-  IF (TG_OP = 'DELETE') THEN
-    IF (OLD.vodist_tax_id <> -1) THEN
-    -- Delete any existing voheadtax adjustment records
-      DELETE FROM voheadtax
-      WHERE ( (taxhist_parent_id=OLD.vodist_vohead_id)
-        AND   (taxhist_tax_id=OLD.vodist_tax_id)
-        AND   (taxhist_taxtype_id=getAdjustmentTaxTypeId()) );
-    END IF;
-
-    RETURN OLD;
-  END IF;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE 'plpgsql';
-
+/*
+    Logic appears to be duplicated in the AFTER trigger
+    Remove this trigger function and check no side-effects found
+*/
 SELECT dropIfExists('TRIGGER', 'vodistBeforeTrigger');
-CREATE TRIGGER vodistBeforeTrigger
-  BEFORE INSERT OR UPDATE OR DELETE
-  ON vodist
-  FOR EACH ROW
-  EXECUTE PROCEDURE _vodistBeforeTrigger();
+DROP FUNCTION IF EXISTS _vodistBeforeTrigger();
 
 CREATE OR REPLACE FUNCTION _vodistAfterTrigger() RETURNS "trigger" AS $$
--- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple. 
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple.
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   _r RECORD;
@@ -36,11 +14,11 @@ DECLARE
 BEGIN
   IF ( (TG_OP = 'UPDATE') OR (TG_OP = 'DELETE') ) THEN
     IF (OLD.vodist_tax_id <> -1) THEN
-    -- Delete any existing voheadtax adjustment records
+    -- Delete any existing voheadtax records
       DELETE FROM voheadtax
       WHERE ( (taxhist_parent_id=OLD.vodist_vohead_id)
         AND   (taxhist_tax_id=OLD.vodist_tax_id)
-        AND   (taxhist_taxtype_id=getAdjustmentTaxTypeId()) );
+        AND   (COALESCE(taxhist_taxtype_id,-1) <> getFreightTaxtypeId()) );
     END IF;
   END IF;
 
@@ -72,7 +50,7 @@ BEGIN
         taxhist_reverse_charge )
     VALUES
       ( NEW.vodist_vohead_id,
-        getAdjustmentTaxTypeId(),
+        COALESCE(NEW.vodist_taxtype_id, getAdjustmentTaxTypeid()),
         NEW.vodist_tax_id,
         0,
         NULL,

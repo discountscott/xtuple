@@ -46,7 +46,11 @@ SELECT
   COALESCE(taxtype_name,<? value("none") ?>) AS taxtype, taxtype_descrip,
   COALESCE(taxclass_code,<? value("none") ?>) AS taxclass, taxclass_descrip,
   COALESCE(taxauth_code,<? value("none") ?>) AS taxauth, taxauth_name AS taxauth_descrip,
-  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, curr_abbr, 
+  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, 
+  CASE WHEN fetchmetrictext('CurrencyExchangeSense')::INTEGER = 1 THEN
+       round((1.0 / taxhist_curr_rate),6)
+  ELSE round(taxhist_curr_rate,6) END AS rate,
+  curr_abbr, 
   cohist_invcnumber AS docnumber, 
   <? value("sales") ?> AS source,
   CASE cohist_doctype WHEN 'I' THEN <? value("invoice") ?>
@@ -93,6 +97,9 @@ SELECT
   'extprice' AS amount_xtnumericrole,
   'curr' AS taxhist_tax_xtnumericrole,
   'curr' AS taxbase_xtnumericrole,
+  'uomratio' AS rate_xtnumericrole,
+   0 AS salesbase_xttotalrole,
+   0 AS purchasebase_xttotalrole,
    0 AS taxbase_xttotalrole
 FROM cohisttax
  JOIN cohist ON (cohist_id=taxhist_parent_id)
@@ -151,7 +158,11 @@ SELECT
   COALESCE(taxtype_name,<? value("none") ?>) AS taxtype, taxtype_descrip,
   COALESCE(taxclass_code,<? value("none") ?>) AS taxclass, taxclass_descrip,
   COALESCE(taxauth_code,<? value("none") ?>) AS taxauth, taxauth_name AS taxauth_descrip,
-  <? value("none") ?> AS taxzone,'' AS taxzone_descrip, curr_abbr, 
+  <? value("none") ?> AS taxzone,'' AS taxzone_descrip, 
+  CASE WHEN fetchmetrictext('CurrencyExchangeSense')::INTEGER = 1 THEN
+       round((1.0 / taxhist_curr_rate),6)
+  ELSE round(taxhist_curr_rate,6) END AS rate,
+  curr_abbr, 
   apopen_docnumber AS docnumber, 
   <? value("purchase") ?> || CASE WHEN taxhist_reverse_charge THEN ' ('||<? value("reversecharge") ?>||')' ELSE '' END AS source,
   CASE apopen_doctype WHEN 'C' THEN <? value("creditmemo") ?> 
@@ -169,7 +180,8 @@ SELECT
   0 AS salesbase,
   0 AS salesfreightbase,
   0 AS freighttax,
-  (apopen_amount / apopen_curr_rate) - ABS(COALESCE(taxpay_tax, taxhist_tax) / taxhist_curr_rate) AS purchasebase,
+  CASE WHEN NOT taxhist_reverse_charge THEN
+    (apopen_amount / apopen_curr_rate) - ABS(COALESCE(taxpay_tax, taxhist_tax) / taxhist_curr_rate) ELSE 0 END AS purchasebase,
   0 AS purchasefreightbase,
   COALESCE(taxpay_tax, taxhist_tax) AS taxlocal,
   formatMoney(COALESCE(taxpay_tax, taxhist_tax)) AS f_taxlocal,
@@ -182,6 +194,9 @@ SELECT
   'extprice' AS extension_xtnumericrole,
   'curr' AS taxhist_tax_xtnumericrole,
   'curr' AS taxbase_xtnumericrole,
+  'uomratio' AS rate_xtnumericrole,
+   0 AS salesbase_xttotalrole,
+   0 AS purchasebase_xttotalrole,
    0 AS taxbase_xttotalrole
 FROM apopentax
  JOIN apopen ON (apopen_id=taxhist_parent_id)
@@ -229,7 +244,11 @@ SELECT
   COALESCE(taxtype_name,<? value("none") ?>) AS taxtype, taxtype_descrip,
   COALESCE(taxclass_code,<? value("none") ?>) AS taxclass, taxclass_descrip,
   COALESCE(taxauth_code,<? value("none") ?>) AS taxauth, taxauth_name AS taxauth_descrip,
-  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, curr_abbr, 
+  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, 
+  CASE WHEN fetchmetrictext('CurrencyExchangeSense')::INTEGER = 1 THEN
+       round((1.0 / taxhist_curr_rate),6)
+  ELSE round(taxhist_curr_rate,6) END AS rate,
+  curr_abbr, 
   vohead_number AS docnumber, 
   <? value("purchase") ?> || CASE WHEN taxhist_reverse_charge THEN ' ('||<? value("reversecharge") ?>||')' ELSE '' END AS source,
   <? value("voucher") ?>  AS doctype,
@@ -240,16 +259,25 @@ SELECT
   formatQty(1) AS f_qty,
   0 AS unitprice,
   formatPurchPrice(0) AS f_unitprice,
-  COALESCE((SELECT SUM(vodist_amount) FROM vodist WHERE vodist_vohead_id=v.vohead_id AND (vodist_poitem_id = -1 AND vodist_tax_id = -1)), 0)
-    + COALESCE(vohead_freight,0) AS amount,
-  formatMoney(COALESCE((SELECT SUM(vodist_amount) FROM vodist WHERE vodist_vohead_id=v.vohead_id AND (vodist_poitem_id = -1 AND vodist_tax_id = -1)), 0)
-    + COALESCE(vohead_freight,0)) AS f_amount,
+  CASE WHEN NOT taxhist_reverse_charge THEN
+    COALESCE((SELECT SUM(vodist_amount) FROM vodist 
+            WHERE vodist_vohead_id=v.vohead_id AND (vodist_poitem_id = -1 AND vodist_tax_id = -1) 
+             AND COALESCE(vodist_taxtype_id, getAdjustmentTaxtypeId())=taxhist_taxtype_id), 0)
+      + COALESCE(vohead_freight,0) ELSE 0 END AS amount,
+  formatMoney(CASE WHEN NOT taxhist_reverse_charge THEN 
+                COALESCE((SELECT SUM(vodist_amount) FROM vodist 
+                 WHERE vodist_vohead_id=v.vohead_id AND (vodist_poitem_id = -1 AND vodist_tax_id = -1) 
+                   AND COALESCE(vodist_taxtype_id, getAdjustmentTaxtypeId())=taxhist_taxtype_id), 0)
+                + COALESCE(vohead_freight,0) ELSE 0 END) AS f_amount,
   0 AS salesbase,  
   0 AS salesfreightbase,
   CASE WHEN (taxhist_taxtype_id=getfreighttaxtypeid()) THEN 
     COALESCE(taxpay_tax, taxhist_tax) else 0 end AS freighttax,
-  (COALESCE((SELECT sum(vodist_amount) FROM vodist WHERE vodist_vohead_id=v.vohead_id AND (vodist_poitem_id = -1 AND vodist_tax_id = -1)), 0)
-    + COALESCE(vohead_freight,0)) / taxhist_curr_rate AS purchasebase,
+  CASE WHEN NOT taxhist_reverse_charge THEN
+    (COALESCE((SELECT sum(vodist_amount) FROM vodist 
+            WHERE vodist_vohead_id=v.vohead_id AND (vodist_poitem_id = -1 AND vodist_tax_id = -1) 
+             AND COALESCE(vodist_taxtype_id, getAdjustmentTaxtypeId())=taxhist_taxtype_id), 0)
+      + COALESCE(vohead_freight,0)) / taxhist_curr_rate ELSE 0 END AS purchasebase,
   COALESCE(vohead_freight, 0) AS purchasefreightbase,
   COALESCE(taxpay_tax, taxhist_tax) AS taxlocal,
   formatMoney(COALESCE(taxpay_tax, taxhist_tax)) AS f_taxlocal,
@@ -262,6 +290,9 @@ SELECT
   'extprice' AS amount_xtnumericrole,
   'curr' AS taxhist_tax_xtnumericrole,
   'curr' AS taxbase_xtnumericrole,
+  'uomratio' AS rate_xtnumericrole,
+   0 AS salesbase_xttotalrole,
+   0 AS purchasebase_xttotalrole,
    0 AS taxbase_xttotalrole
 FROM voheadtax
  JOIN vohead v ON (vohead_id=taxhist_parent_id)
@@ -311,7 +342,11 @@ SELECT
   COALESCE(taxtype_name,<? value("none") ?>) AS taxtype, taxtype_descrip,
   COALESCE(taxclass_code,<? value("none") ?>) AS taxclass, taxclass_descrip,
   COALESCE(taxauth_code,<? value("none") ?>) AS taxauth, taxauth_name AS taxauth_descrip,
-  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, curr_abbr, 
+  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, 
+  CASE WHEN fetchmetrictext('CurrencyExchangeSense')::INTEGER = 1 THEN
+       round((1.0 / taxhist_curr_rate),6)
+  ELSE round(taxhist_curr_rate,6) END AS rate,
+  curr_abbr, 
   vohead_number AS docnumber, 
   <? value("purchase") ?> || CASE WHEN taxhist_reverse_charge THEN ' ('||<? value("reversecharge") ?>||')' ELSE '' END AS source,
   <? value("voucher") ?>  AS doctype,
@@ -326,10 +361,12 @@ SELECT
   formatMoney(CASE WHEN (taxhist_taxtype_id=getfreighttaxtypeid()) THEN COALESCE(SUM(voitem_freight),0) ELSE COALESCE(SUM(vodist_amount),0) END) AS f_amount,
   0 AS salesbase,
   0 AS salesfreightbase,
-  CASE WHEN (taxhist_taxtype_id=getfreighttaxtypeid()) THEN COALESCE(taxpay_tax, taxhist_tax) ELSE 0 END AS freighttax,
-  currToBase(vohead_curr_id, CASE WHEN (taxhist_taxtype_id=getfreighttaxtypeid()) THEN coalesce(SUM(voitem_freight),0) 
+  CASE WHEN (taxhist_taxtype_id=getfreighttaxtypeid()) THEN COALESCE(taxpay_tax, taxhist_tax) ELSE 0.00 END AS freighttax,
+  CASE WHEN NOT taxhist_reverse_charge THEN
+    currToBase(vohead_curr_id, CASE WHEN (taxhist_taxtype_id=getfreighttaxtypeid()) THEN coalesce(SUM(voitem_freight),0) 
                                                                                   ELSE COALESCE(SUM(vodist_amount),0) 
-                                  END, vohead_distdate)  AS purchasebase,
+                                  END, vohead_distdate)  
+  ELSE 0 END AS purchasebase,
   CASE WHEN (taxhist_taxtype_id=getfreighttaxtypeid()) THEN COALESCE(SUM(voitem_freight),0) ELSE 0.00 END AS purchasefreightbase,
   COALESCE(taxpay_tax, taxhist_tax) AS taxlocal,
   formatMoney(COALESCE(taxpay_tax, taxhist_tax)) AS f_taxlocal,
@@ -342,6 +379,9 @@ SELECT
   'extprice' AS amount_xtnumericrole,
   'curr' AS taxhist_tax_xtnumericrole,
   'curr' AS taxbase_xtnumericrole,
+  'uomratio' AS rate_xtnumericrole,
+   0 AS salesbase_xttotalrole,
+   0 AS purchasebase_xttotalrole,
    0 AS taxbase_xttotalrole
 FROM voitemtax
  JOIN voitem ON (voitem_id=taxhist_parent_id)
@@ -406,7 +446,11 @@ SELECT
   COALESCE(taxtype_name,<? value("none") ?>) AS taxtype, taxtype_descrip,
   COALESCE(taxclass_code,<? value("none") ?>) AS taxclass, taxclass_descrip,
   COALESCE(taxauth_code,<? value("none") ?>) AS taxauth, taxauth_name AS taxauth_descrip,
-  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, curr_abbr, 
+  COALESCE(taxzone_code,<? value("none") ?>) AS taxzone, taxzone_descrip, 
+  CASE WHEN fetchmetrictext('CurrencyExchangeSense')::INTEGER = 1 THEN
+       round((1.0 / taxhist_curr_rate),6)
+  ELSE round(taxhist_curr_rate,6) END AS rate,
+  curr_abbr,  
   checkhead_number::text AS docnumber, 
   <? value("purchase") ?> AS source,
   <? value("check") ?>  AS doctype,
@@ -435,6 +479,9 @@ SELECT
   'extprice' AS amount_xtnumericrole,
   'curr' AS taxhist_tax_xtnumericrole,
   'curr' AS taxbase_xtnumericrole,
+  'uomratio' AS rate_xtnumericrole,
+   0 AS salesbase_xttotalrole,
+   0 AS purchasebase_xttotalrole,
    0 AS taxbase_xttotalrole
 FROM checkheadtax
  JOIN checkhead ON (checkhead_id=taxhist_parent_id)

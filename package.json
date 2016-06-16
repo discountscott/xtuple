@@ -2,7 +2,7 @@
   "author": "xTuple <dev@xtuple.com>",
   "name": "xtuple",
   "description": "xTuple Enterprise Resource Planning Mobile-Web client",
-  "version": "4.10.0-beta",
+  "version": "4.10.0-beta.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/xtuple/xtuple.git"
@@ -57,10 +57,6 @@
   },
   "main": "node-datasource/main.js",
   "scripts": {
-    "build-basic-postbooks-package-sql": "./scripts/explode_manifest.js -m foundation-database/manifest.js -n postbooks_upgrade.sql",
-    "build-basic-empty": "./scripts/build_app.js -d empty --databaseonly -e foundation-database -i -s foundation-database/empty_data.sql",
-    "build-basic-postbooks-demo": "./scripts/build_app.js -d postbooks_demo --databaseonly -e foundation-database -i -s foundation-database/postbooks_demo_data.sql",
-    "build-basic-quickstart": "./scripts/build_app.js -d quickstart --databaseonly -e foundation-database -i -s foundation-database/quickstart_data.sql",
     "jshint": "./node_modules/.bin/jshint lib/backbone-x/source lib/enyo-x/source lib/tools/source enyo-client/application/source/ enyo-client/extensions node-datasource",
     "jsdoc-api": "rm -rf scripts/output;./node_modules/xtuple-documentation/node_modules/jsdoc/jsdoc -t ./node_modules/xtuple-documentation/jsdoc-setup/api-templates -c ./node_modules/xtuple-documentation/jsdoc-setup/jsdoc.conf.json -d ./scripts/output -r ./lib/backbone-x/source ./lib/tools/source ./lib/enyo-x/source/widgets ./lib/enyo-x/source/views ./lib/enyo-x/source/app.js ./lib/enyo-x/source/core.js ./node_modules/xtuple-documentation/jsdoc-setup/api-readme.md",
     "jsdoc-specs": "rm -rf scripts/output/*;mkdir scripts/output/tech-specs;./node_modules/xtuple-documentation/node_modules/jsdoc/jsdoc -t ./node_modules/xtuple-documentation/jsdoc-setup/spec-templates -c ./node_modules/xtuple-documentation/jsdoc-setup/jsdoc.conf.json -d ./scripts/output/tech-specs/ -r ./test/specs ./node_modules/xtuple-documentation/jsdoc-setup/tech-specs-readme.md;mkdir scripts/output/user-specs;./node_modules/xtuple-documentation/node_modules/jsdoc/jsdoc -t ./node_modules/xtuple-documentation/jsdoc-setup/spec-templates -c ./node_modules/xtuple-documentation/jsdoc-setup/jsdoc-user.conf.json -d ./scripts/output/user-specs/ -r ./test/specs ./node_modules/xtuple-documentation/jsdoc-setup/user-specs-readme.md;",

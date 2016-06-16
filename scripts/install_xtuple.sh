@@ -46,7 +46,7 @@ cdir() {
   log "Changing directory to $1"
 }
 
-PG_VERSION=9.3
+PG_VERSION=9.4
 DATABASE=dev
 RUNALL=true
 XT_VERSION=
@@ -100,18 +100,28 @@ while getopts ":d:ipnhmx-:" opt; do
       OPENRPT=true
       ;;
     h)
-      echo "Usage: install_xtuple [OPTION]"
-   echo "Build the full xTuple Mobile Development Environment."
-   echo ""
-   echo "To install everything, run bash /scripts/install_xtuple.sh"
-   echo ""
-   echo -e "  -h\t\t"
-   echo -e "  -i\t\t"
-   echo -e "  -p\t\t"
-   echo -e "  -n\t\t"
-   echo -e "  -m\t\t"
-   echo -e "  -x\t\t"
-   exit 0;
+      cat <<EOUsage
+Usage: install_xtuple -h
+       install_xtuple [ options ]
+
+Build the full xTuple Web Client development environment.
+To install everything, run bash /scripts/install_xtuple.sh
+
+  -h            print this usage message
+
+  -init         replace the xtuple directory with a fresh clone
+  -i            install PostgreSQL, required build tools, curl, nvm, nodejs, and run npm install
+  -p            configure PostgreSQL
+  -openrpt      install OpenRPT only
+  -n            configure the node-datasource and build a test database
+
+  -d    VER     install PostgreSQL version VER
+  -node VER     install node.js version VER
+
+  -m            [ seems to be obsolete ]
+  -x    VER     [ seems to be obsolete ]
+EOUsage
+      exit 0;
       ;;
   esac
 done
@@ -145,8 +155,7 @@ install_packages() {
     sudo add-apt-repository -y "deb http://ftp.debian.org/debian wheezy-backports main"
   fi
   sudo add-apt-repository -y "deb http://apt.postgresql.org/pub/repos/apt/ ${DEBDIST}-pgdg main"
-  sudo wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-  sudo apt-get -qq update 2>&1 | tee -a $LOG_FILE
+  sudo apt-get -qq update |& tee -a $LOG_FILE
 
   # we won't support pg 9.1 in 4.10 or later
   if [ ${PG_VERSION} != 9.1 ] ; then
@@ -157,11 +166,17 @@ install_packages() {
 
   sudo apt-get -q -y install curl build-essential libssl-dev \
     postgresql-${PG_VERSION} postgresql-server-dev-${PG_VERSION} \
-    postgresql-${PG_VERSION}-asn1oid postgresql-contrib-${PG_VERSION} 2>&1 \
-    | tee -a $LOG_FILE
+    postgresql-${PG_VERSION}-asn1oid postgresql-contrib-${PG_VERSION} \
+    |& tee -a $LOG_FILE
 
-  sudo apt-get -q -y install postgresql-${PG_VERSION}-plv8 2>&1 \
-    | tee -a $LOG_FILE
+  # we had problems with a newer plv8 in mar-apr 2016
+  local PLV8PKG="postgresql-${PG_VERSION}-plv8"
+  if [ ${PG_VERSION} = 9.3 ] ; then
+    PLV8PKG="postgresql-${PG_VERSION}-plv8=1.4.0.ds-2"
+  elif [ ${PG_VERSION} = 9.4 ] ; then
+    PLV8PKG="postgresql-${PG_VERSION}-plv8=1:1.4.8.ds-1.pgdg14.04+1"
+  fi
+  sudo apt-get -q -y install ${PLV8PKG} |& tee -a $LOG_FILE
 
   if [ ! -d "/usr/local/nvm" ]; then
     sudo rm -f /usr/local/bin/nvm
@@ -198,7 +213,7 @@ install_packages() {
 
   log "installing npm modules..."
   sudo chown -R $USER $HOME/.npm
-  npm install --unsafe-perm 2>&1 | tee -a $LOG_FILE
+  npm install --unsafe-perm |& tee -a $LOG_FILE
 }
 
 # Use only if running from a debian package install for the first time

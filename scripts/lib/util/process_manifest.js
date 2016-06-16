@@ -22,8 +22,8 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
 
   // register extension and dependencies
   var getRegistrationSql = function (options, extensionLocation) {
-    var registerSql = 'do $$ plv8.elog(NOTICE, "About to register extension ' +
-      options.name + '"); $$ language plv8;\n';
+    var registerSql = 'do $notice$ plv8.elog(NOTICE, "About to register extension ' +
+      options.name + '"); $notice$ language plv8;\n';
 
     registerSql = registerSql + "select xt.register_extension('%@', '%@', '%@', '', %@);\n"
       .f(options.name, options.description || options.comment, extensionLocation, options.loadOrder || 9999);
@@ -149,7 +149,7 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
                 parser = PEG.buildParser(data, {output: 'source'});
 
             // Create the parser text install_js file text.
-            jsFileString += "select xt.install_js('" + pegInfo.nameSpace + "', '" + pegInfo.type + "', '" + pegInfo.context + "',  $$\n" +
+            jsFileString += "select xt.install_js('" + pegInfo.nameSpace + "', '" + pegInfo.type + "', '" + pegInfo.context + "',  $parser$\n" +
                             "\n" +
                             "/**\n" +
                             " * WARNING!!! IMPORTANT!!! README!!!\n" +
@@ -170,7 +170,7 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
             jsFileString += parser + ";\n\n";
             jsFileString += "})();\n" +
                             "\n" +
-                            "$$ );\n";
+                            "$parser$ );\n";
 
             // Save the parser install_js file to the file system.
             fs.writeFile(path.join(dbSourceRoot, pegInfo.javascriptPath), jsFileString, "utf8", function (err) {
@@ -300,8 +300,8 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
             scriptCallback([topsep, err, botsep].join("\n"));
             return;
           }
-          var beforeNoticeSql = "do $$ BEGIN RAISE NOTICE 'Loading file " + path.basename(fullFilename) +
-              "'; END $$ language plpgsql;\n",
+          var beforeNoticeSql = "do $notice$ BEGIN RAISE NOTICE 'Loading file " + path.basename(fullFilename) +
+              "'; END $notice$ language plpgsql;\n",
             extname = path.extname(fullFilename).substring(1);
 
           // convert special files: metasql, uiforms, reports, uijs

@@ -1,6 +1,6 @@
 
 CREATE OR REPLACE FUNCTION postCreditMemo(INTEGER, INTEGER) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2015 by OpenMFG LLC, d/b/a xTuple. 
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple. 
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   pCmheadid ALIAS FOR $1;
@@ -18,7 +18,7 @@ $$ LANGUAGE 'plpgsql';
 
 
 CREATE OR REPLACE FUNCTION postCreditMemo(INTEGER, INTEGER, INTEGER) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2015 by OpenMFG LLC, d/b/a xTuple. 
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple. 
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   pCmheadid ALIAS FOR $1;
@@ -157,6 +157,7 @@ BEGIN
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -172,6 +173,7 @@ BEGIN
       _p.cmhead_billtoname, _p.cmhead_billtoaddress1,
       _p.cmhead_billtoaddress2, _p.cmhead_billtoaddress3,
       _p.cmhead_billtocity, _p.cmhead_billtostate, _p.cmhead_billtozip,
+      _p.cmhead_billtocountry, _p.cmhead_shipto_country,
       _p.cmhead_shipto_name, _p.cmhead_shipto_address1,
       _p.cmhead_shipto_address2, _p.cmhead_shipto_address3,
       _p.cmhead_shipto_city, _p.cmhead_shipto_state, _p.cmhead_shipto_zipcode,
@@ -236,6 +238,7 @@ BEGIN
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -252,6 +255,7 @@ BEGIN
       _p.cmhead_billtoname, _p.cmhead_billtoaddress1,
       _p.cmhead_billtoaddress2, _p.cmhead_billtoaddress3,
       _p.cmhead_billtocity, _p.cmhead_billtostate, _p.cmhead_billtozip,
+      _p.cmhead_billtocountry, _p.cmhead_shipto_country,
       _p.cmhead_shipto_name, _p.cmhead_shipto_address1,
       _p.cmhead_shipto_address2, _p.cmhead_shipto_address3,
       _p.cmhead_shipto_city, _p.cmhead_shipto_state, _p.cmhead_shipto_zipcode,
@@ -303,6 +307,7 @@ BEGIN
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -319,6 +324,7 @@ BEGIN
       _p.cmhead_billtoname, _p.cmhead_billtoaddress1,
       _p.cmhead_billtoaddress2, _p.cmhead_billtoaddress3,
       _p.cmhead_billtocity, _p.cmhead_billtostate, _p.cmhead_billtozip,
+      _p.cmhead_billtocountry, _p.cmhead_shipto_country,
       _p.cmhead_shipto_name, _p.cmhead_shipto_address1,
       _p.cmhead_shipto_address2, _p.cmhead_shipto_address3,
       _p.cmhead_shipto_city, _p.cmhead_shipto_state, _p.cmhead_shipto_zipcode,
@@ -344,6 +350,7 @@ BEGIN
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -360,6 +367,7 @@ BEGIN
       _p.cmhead_billtoname, _p.cmhead_billtoaddress1,
       _p.cmhead_billtoaddress2, _p.cmhead_billtoaddress3,
       _p.cmhead_billtocity, _p.cmhead_billtostate, _p.cmhead_billtozip,
+      _p.cmhead_billtocountry, _p.cmhead_shipto_country,
       _p.cmhead_shipto_name, _p.cmhead_shipto_address1,
       _p.cmhead_shipto_address2, _p.cmhead_shipto_address3,
       _p.cmhead_shipto_city, _p.cmhead_shipto_state, _p.cmhead_shipto_zipcode,
@@ -415,6 +423,7 @@ BEGIN
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -431,6 +440,7 @@ BEGIN
       _p.cmhead_billtoname, _p.cmhead_billtoaddress1,
       _p.cmhead_billtoaddress2, _p.cmhead_billtoaddress3,
       _p.cmhead_billtocity, _p.cmhead_billtostate, _p.cmhead_billtozip,
+      _p.cmhead_billtocountry, _p.cmhead_shipto_country,
       _p.cmhead_shipto_name, _p.cmhead_shipto_address1,
       _p.cmhead_shipto_address2, _p.cmhead_shipto_address3,
       _p.cmhead_shipto_city, _p.cmhead_shipto_state, _p.cmhead_shipto_zipcode,

@@ -5,16 +5,22 @@
 -- Copyright (c) 1999-2015 by OpenMFG LLC, d/b/a xTuple.
 -- See www.xtuple.com/CPAL for the full text of the software license.
 
-SELECT itemsite_id,warehous_code,itemsite_qtyonhand, itemsite_active, 
+SELECT itemsite_id,warehous_code,warehous_descrip, itemsite_qtyonhand, itemsite_active, 
        CASE WHEN ( (itemsite_loccntrl) OR
                    (itemsite_controlmethod IN ('L', 'S')) ) THEN 1
             ELSE 0
        END AS altId,
-       CASE WHEN itemsite_controlmethod='R' THEN <? value("regular") ?>
-                           WHEN itemsite_controlmethod='N' THEN <? value("none") ?>
-                           WHEN itemsite_controlmethod='L' THEN <? value("lot") ?>
-                           WHEN itemsite_controlmethod='S' THEN <? value("serial") ?>
+       CASE itemsite_controlmethod WHEN 'R' THEN <? value("regular") ?>
+                                   WHEN 'N' THEN <? value("none") ?>
+                                   WHEN 'L' THEN <? value("lot") ?>
+                                   WHEN 'S' THEN <? value("serial") ?>
                       END AS controlmethod,
+       CASE itemsite_costmethod WHEN 'S' THEN <? value("standard") ?>
+                                WHEN 'N' THEN <? value("none") ?>
+                                WHEN 'J' THEN <? value("job") ?>
+                                WHEN 'A' THEN <? value("average") ?>
+                      END AS costmethod,
+       CASE WHEN (itemsite_costmethod='A') THEN avgCost(itemsite_id) END AS avgcost,
          itemsite_loccntrl,
          item_number,
          (item_descrip1 || ' ' || item_descrip2) AS description, 
@@ -29,6 +35,8 @@ SELECT itemsite_id,warehous_code,itemsite_qtyonhand, itemsite_active,
          END AS datelastused,
          itemsite_abcclass, itemsite_cyclecountfreq,
          'qty' AS itemsite_qtyonhand_xtnumericrole,
+         'curr' AS avgcost_xtnumericrole,
+        <? value("na") ?> AS avgcost_xtnullrole,
         <? value("na") ?> AS soldranking_xtnullrole,
         <? value("never") ?> AS datelastused_xtnullrole,
         <? value("never") ?> AS datelastcount_xtnullrole             

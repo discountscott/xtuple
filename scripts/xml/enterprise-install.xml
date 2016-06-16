@@ -1,5 +1,5 @@
-<package id        = "distribution-install-4100Beta"
-         version   = "4.10.0Beta"
+<package id        = "enterprise-install-4100Beta2"
+         version   = "4.10.0Beta2"
          developer = "xTuple"
          descrip   = "load PostBooks resources"
          updater   = "2.2.4" >
@@ -13,7 +13,7 @@
   <prerequisite type = "query"
                 name = "Checking for too-old xTuple ERP database version" >
     <query>SELECT compareVersion(fetchMetricText('ServerVersion'), '4.4.0') >= 0;</query>
-    <message>This package must be applied to a 4.4.0 or later database.
+    <message>This package must be applied to a 4.4+ database.
     </message>
   </prerequisite>
 
@@ -50,7 +50,7 @@
     </message>
   </prerequisite>
 
-  <prerequisite type = "query"
+ <prerequisite type = "query"
                name = "Checking for mobile-enabled schemas" >
     <query>SELECT NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'xm');</query>
     <message>This package may not be applied to a mobile-enabled database. Please see your system administrator or contact xTuple.
@@ -58,41 +58,30 @@
   </prerequisite>
 
   <prerequisite type = "query"
-               name = "Checking for duplicate Credit Card payments on Sales Orders" >
-    <query>
-      WITH counter AS (SELECT COUNT(*) AS freq
-                        FROM payco
-                        GROUP BY payco_ccpay_id, payco_cohead_id
-                        ORDER BY 1)
-      SELECT (COALESCE(MAX(freq), 1) = 0 OR COALESCE(MAX(freq), 1) = 1)
-      FROM counter;
-    </query>
-    <message>There are duplicate payco_ccpay_id and payco_cohead_id on the payco table. Please see your system administrator or contact xTuple.
-    </message>
-  </prerequisite>
-
-  <prerequisite type = "query"
                 name = "Checking for Comment Type Source consistency - cmnttype" >
     <query>SELECT BOOL_AND(cmnttype_id IS NOT NULL)
-                  FROM cmnttypesource
-                  LEFT OUTER JOIN cmnttype ON cmnttypesource_cmnttype_id = cmnttype_id;</query>
+             FROM cmnttypesource
+             LEFT OUTER JOIN cmnttype ON cmnttypesource_cmnttype_id = cmnttype_id;</query>
     <message>There are records in the cmnttypesource table with no matching cmnttype entries. Please see your system administrator or contact xTuple.</message>
   </prerequisite>
 
   <prerequisite type = "query"
                 name = "Checking for Comment Type Source consistency - source" >
     <query>SELECT BOOL_AND(source_id IS NOT NULL)
-                  FROM cmnttypesource
-                  LEFT OUTER JOIN source ON cmnttypesource_source_id = source_id;</query>
+             FROM cmnttypesource
+             LEFT OUTER JOIN source ON cmnttypesource_source_id = source_id;</query>
     <message>There are records in the cmnttypesource table with no matching source entries. Please see your system administrator or contact xTuple.</message>
   </prerequisite>
 
-  <script file="postbooks_upgrade.sql" />
-  <script file="inventory_basic_install.sql" />
-  <script file="inventory_upgrade.sql" />
-  <script file="commercialcore_basic_install.sql" />
-  <script file="commercialcore_upgrade.sql" />
-  <script file="distribution_basic_install.sql" />
-  <script file="distribution_upgrade.sql" />
+
+  <script file="postbooks-upgrade.sql" />
+  <script file="inventory-install.sql" />
+  <script file="inventory-upgrade.sql" />
+  <script file="commercialcore-install.sql" />
+  <script file="commercialcore-upgrade.sql" />
+  <script file="distribution-install.sql" />
+  <script file="distribution-upgrade.sql" />
+  <script file="manufacturing-install.sql" />
+  <script file="manufacturing-upgrade.sql" />
 
 </package>

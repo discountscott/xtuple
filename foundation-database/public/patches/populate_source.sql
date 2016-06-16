@@ -460,7 +460,7 @@ select createDoctype(27, --pDocAssNum
                      '', --pWidget
                      'join custinfo on rahead_cust_id = cust_id', --pJoin
                      'rahead_id', --pParam
-                     'purchaseOrder', --pUi
+                     'returnAuthorization', --pUi
                      '', --pPriv
                      'Sales' --pModule
 );

@@ -3,6 +3,7 @@ CREATE VIEW invoiceitem AS
 SELECT invcitem.*, itemsite_id, cohead_number,
        COALESCE((invcitem_billed * invcitem_qty_invuomratio), 0) AS qty,
        COALESCE((invcitem_price / invcitem_price_invuomratio), 0) AS unitprice,
+       COALESCE((invcitem_listprice / invcitem_price_invuomratio), 0) AS listprice,
        COALESCE(round((invcitem_billed * invcitem_qty_invuomratio) *
                       (invcitem_price / invcitem_price_invuomratio), 2), 0) AS extprice,
        currToBase(invchead_curr_id,

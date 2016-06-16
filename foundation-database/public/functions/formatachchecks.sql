@@ -1,10 +1,11 @@
-CREATE OR REPLACE FUNCTION formatACHChecks(INTEGER, INTEGER, TEXT) RETURNS SETOF achline AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple.
+CREATE OR REPLACE FUNCTION public.formatachchecks(pbankaccntid INTEGER, -- all unprinted checks for this bankaccnt
+                                                  pcheckheadid INTEGER, -- but if 2nd arg not null then just 1 check
+                                                  penckey TEXT)
+  RETURNS SETOF achline AS
+$BODY$
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple.
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
-  pbankaccntid     ALIAS FOR $1;   -- all unprinted checks for this bankaccnt
-  pcheckheadid     ALIAS FOR $2;   -- but if 2nd arg not null then just 1 check
-  penckey          ALIAS FOR $3;
   _bank            RECORD;
   _batchcount      INTEGER := 0;
   _batchcr         NUMERIC := 0;
@@ -26,6 +27,8 @@ DECLARE
   _totalentrycnt   INTEGER := 0;
   _totalhash       INTEGER := 0;
   _transactionprefix TEXT;
+  _blockcount      INTEGER := 0;
+  BLOCKSIZE        DOUBLE PRECISION := 10.0;
 
 BEGIN
   -- General notes:
@@ -316,12 +319,13 @@ BEGIN
 
   -- and end with a file control record
   _rowcount := _rowcount + 1;
+  _blockcount := ceil(_rowcount::DOUBLE PRECISION/BLOCKSIZE); -- Issue #27434 need to provide block count instead of row count
   _row.achline_checkhead_id := NULL;
   _row.achline_batch := _filenum;
   _row.achline_type := 'FILECONTROL';
   _row.achline_value := RPAD('9'
                           || RPAD(TO_CHAR(_batchcount,    '000000SG'),   6)
-                          || RPAD(TO_CHAR(_rowcount,      '000000SG'),   6)
+                          || RPAD(TO_CHAR(_blockcount,    '000000SG'),   6)
                           || RPAD(TO_CHAR(_totalentrycnt, '00000000SG'), 8)
                           || RPAD(TO_CHAR(_totalhash % 10000000000,
                                           '0000000000SG'), 10)
@@ -354,5 +358,7 @@ BEGIN
   RETURN;
 
 END;
-$$
-LANGUAGE 'plpgsql';
+$BODY$
+  LANGUAGE plpgsql;
+ALTER FUNCTION public.formatachchecks(INTEGER, INTEGER, TEXT)
+  OWNER TO admin;

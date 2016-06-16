@@ -45,6 +45,7 @@ BEGIN
     coitem_price_uom_id,
     coitem_price_invuomratio,
     coitem_custprice,
+    coitem_listprice,
     coitem_order_id,
     coitem_memo,
     coitem_imported,
@@ -79,7 +80,8 @@ BEGIN
               CASE WHEN (fetchMetricText('soPriceEffective') = 'ScheduleDate') THEN pNEW.scheduled_date
                    WHEN (fetchMetricText('soPriceEffective') = 'OrderDate') THEN _r.cohead_orderdate
                    ELSE CURRENT_DATE END,
-              NULL)
+              NULL),
+    listPrice(_r.item_id, _r.cohead_cust_id, _r.cohead_shipto_id, _r.warehous_id),
     -1,
     pNEW.notes,
     true,

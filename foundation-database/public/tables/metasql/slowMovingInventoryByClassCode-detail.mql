@@ -31,7 +31,14 @@ FROM ( SELECT itemsite_id, warehous_code, item_number,
           AND (item_inv_uom_id=uom_id)
           AND (itemsite_warehous_id=warehous_id)
           AND (itemsite_active)
-          AND (itemsite_datelastused < <? value("cutoffDate") ?>)
+          AND ((itemsite_datelastused < <? value("cutoffDate") ?>)
+            <? if exists("tolerance") ?>
+            OR (SELECT(SUM(invhist_invqty) / itemsite_qtyonhand * 100) < COALESCE(<? value("tolerance") ?>, 0)
+		FROM invhist 
+		WHERE invhist_itemsite_id=itemsite_id
+		AND invhist_transdate > <? value("cutoffDate") ?>
+		GROUP BY itemsite_qtyonhand)
+            <? endif ?>)
         <? if exists("warehous_id") ?>
           AND (itemsite_warehous_id=<? value("warehous_id") ?>)
         <? endif ?>

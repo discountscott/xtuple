@@ -22,7 +22,7 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
     runOrmInstaller,
     select,
     raiseNotice = function (string) {
-      return "do $$ plv8.elog(NOTICE, '%@'); $$ language plv8;\n".f(string);
+      return "do $notice$ plv8.elog(NOTICE, '%@'); $notice$ language plv8;\n".f(string);
     },
     submit,
     /*

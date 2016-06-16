@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION reverseCashReceiptDisc(INTEGER, INTEGER) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple. 
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple. 
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   pCashrcptItemId ALIAS FOR $1;
@@ -20,7 +20,7 @@ BEGIN
     -- Fetch base records for processing
     SELECT aropen_id, aropen_doctype, aropen_amount,
            cashrcptitem_discount,
-           cashrcpt_cust_id, cashrcpt_distdate, cashrcpt_applydate,
+           cashrcptitem_cust_id, cashrcpt_distdate, cashrcpt_applydate,
            cashrcpt_curr_id, cashrcpt_fundstype, cashrcpt_docnumber,
            round(currToCurr(cashrcpt_curr_id, aropen_curr_id, cashrcptitem_discount, cashrcpt_distdate),2) AS aropen_discount
       INTO _r
@@ -30,7 +30,7 @@ BEGIN
     WHERE (cashrcptitem_id=pCashrcptItemId);
 
     -- Get discount account
-    _discountAccntid := findardiscountaccount(_r.cashrcpt_cust_id);
+    _discountAccntid := findardiscountaccount(_r.cashrcptitem_cust_id);
   
     IF (_r.cashrcptitem_discount > 0) THEN
       --  Determine discount percentage
@@ -95,7 +95,7 @@ BEGIN
       END IF; -- End taxes
 
       -- Create negative credit memo for discount
-      SELECT createARCreditMemo(_ardiscountid, _r.cashrcpt_cust_id, _arMemoNumber, '',
+      SELECT createARCreditMemo(_ardiscountid, _r.cashrcptitem_cust_id, _arMemoNumber, '',
                                 _r.cashrcpt_distdate, (_r.cashrcptitem_discount * -1.0),
                                 _comment, -1, -1, _discountAccntid, _r.cashrcpt_distdate,
                                 -1, NULL, 0,

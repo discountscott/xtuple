@@ -1,5 +1,5 @@
-<package id        = "enterprise-upgrade-4100Beta"
-         version   = "4.10.0Beta"
+<package id        = "enterprise-upgrade-4100Beta2"
+         version   = "4.10.0Beta2"
          developer = "xTuple"
          descrip   = "load PostBooks resources"
          updater   = "2.2.4" >
@@ -85,10 +85,10 @@
   </prerequisite>
 
 
-  <script file="postbooks_upgrade.sql" />
-  <script file="inventory_upgrade.sql" />
-  <script file="commercialcore_upgrade.sql" />
-  <script file="distribution_upgrade.sql" />
-  <script file="manufacturing_upgrade.sql" />
+  <script file="postbooks-upgrade.sql" />
+  <script file="inventory-upgrade.sql" />
+  <script file="commercialcore-upgrade.sql" />
+  <script file="distribution-upgrade.sql" />
+  <script file="manufacturing-upgrade.sql" />
 
 </package>

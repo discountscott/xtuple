@@ -1,12 +1,11 @@
 
-CREATE OR REPLACE FUNCTION changeWoDates(INTEGER, DATE, DATE, BOOLEAN) RETURNS INTEGER AS $$
+CREATE OR REPLACE FUNCTION changeWoDates(pWoid INTEGER,
+                                         pStartDate DATE,
+                                         pDueDate DATE,
+                                         pChangeChildren BOOLEAN) RETURNS INTEGER AS $$
 -- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple. 
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE 
-  pWoid ALIAS FOR $1;
-  pStartDate ALIAS FOR $2;
-  pDueDate ALIAS FOR $3;
-  changeChildren ALIAS FOR $4;
   _p RECORD;
   returnCode INTEGER;
   _vtemp NUMERIC;
@@ -77,12 +76,21 @@ BEGIN
   WHERE (wo_id=pWoid);
 
 --  Do the same for the children
-  IF (changeChildren) THEN
-    SELECT MAX(changeWoDates(wo_id, (pStartDate - itemsite_leadtime), pStartDate, TRUE)) INTO returnCode
-    FROM wo, itemsite
-    WHERE ( (wo_itemsite_id=itemsite_id)
-     AND (wo_ordtype='W')
-     AND (wo_ordid=pWoid) );
+  IF (pChangeChildren) THEN
+    IF (fetchMetricBool('UseSiteCalendar')) THEN
+      SELECT MAX(changeWoDates(wo_id, calculatenextworkingdate(itemsite_warehous_id, pStartDate, (itemsite_leadtime * -1)),
+                               pStartDate, TRUE)) INTO returnCode
+      FROM wo, itemsite
+      WHERE ( (wo_itemsite_id=itemsite_id)
+        AND (wo_ordtype='W')
+        AND (wo_ordid=pWoid) );
+    ELSE
+      SELECT MAX(changeWoDates(wo_id, (pStartDate - itemsite_leadtime), pStartDate, TRUE)) INTO returnCode
+      FROM wo, itemsite
+      WHERE ( (wo_itemsite_id=itemsite_id)
+        AND (wo_ordtype='W')
+        AND (wo_ordid=pWoid) );
+    END IF;
   END IF;
 
   IF (returnCode IS NULL) THEN
@@ -92,4 +100,4 @@ BEGIN
   RETURN returnCode;
 
 END;
-$$ LANGUAGE 'plpgsql';
+$$ LANGUAGE plpgsql;

@@ -106,13 +106,14 @@ BEGIN
   FOR _glseries IN SELECT glseries_source, glseries_doctype, glseries_docnumber,
                           glseries_accnt_id, glseries_distdate, glseries_notes,
                           glseries_misc_id,
-                          SUM(glseries_amount) as amount
+                          SUM(glseries_amount) as amount,
+                          (glseries_amount > 0) as credit
                      FROM glseries
                     WHERE ((glseries_amount<>0.0)
                       AND  (glseries_sequence=pSequence))
                     GROUP BY glseries_source, glseries_doctype, glseries_docnumber,
                              glseries_accnt_id, glseries_distdate, glseries_notes,
-                             glseries_misc_id LOOP
+                             glseries_misc_id, credit LOOP
 
 -- refuse to accept postings into closed periods
     IF (SELECT BOOL_AND(COALESCE(period_closed, FALSE))

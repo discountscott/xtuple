@@ -38,8 +38,8 @@ var _ = require('underscore'),
         if (!contents || contents === "undefined") {
           return "";
         }
-        return "select xt.insert_client($$" + contents +
-          "$$, '" + extension +
+        return "select xt.insert_client($contents$" + contents +
+          "$contents$, '" + extension +
           "', '" + version +
           "', '" + language + "');";
       };

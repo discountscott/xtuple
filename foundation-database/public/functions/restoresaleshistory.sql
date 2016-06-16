@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION restoreSalesHistory(INTEGER) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple. 
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple.
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   pAsohistid ALIAS FOR $1;
@@ -25,6 +25,8 @@ BEGIN
                        cohist_billtocity,
                        cohist_billtostate,
                        cohist_billtozip,
+                       cohist_billtocountry,
+                       cohist_shiptocountry,
                        cohist_shiptoname,
                        cohist_shiptoaddress1,
                        cohist_shiptoaddress2,
@@ -66,6 +68,8 @@ BEGIN
          asohist_billtocity,
          asohist_billtostate,
          asohist_billtozip,
+         asohist_billtocountry,
+         asohist_shiptocountry,
          asohist_shiptoname,
          asohist_shiptoaddress1,
          asohist_shiptoaddress2,

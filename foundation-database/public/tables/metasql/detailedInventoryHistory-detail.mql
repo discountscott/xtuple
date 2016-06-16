@@ -23,7 +23,20 @@ SELECT
        CASE WHEN NOT invhist_posted THEN 'warning'
        END AS qtforegroundrole
 <? else ?>
-       *
+       *,
+       (cust_number || '-' || cust_name) AS customerinfo,
+       cohead_shiptoname AS shiptoname,   
+       cohead_shiptoaddress1 AS shiptol1,
+       cohead_shiptoaddress2 AS shiptol2,  
+       cohead_shiptoaddress3  AS shiptol3,   
+       (cohead_shiptocity || ', ' || cohead_shiptostate || ' ' || cohead_shiptozipcode) AS citystatezip,    
+       cohead_shiptocountry  AS country,    
+       (cohead_shipto_cntct_honorific || ' ' || cohead_shipto_cntct_first_name || ' ' || cohead_shipto_cntct_last_name) AS contact,  
+       cohead_shipto_cntct_phone AS contact_phone,                
+       cohead_shipto_cntct_fax AS contact_fax, 
+       cohead_shipto_cntct_email AS contact_email,                 
+       cohead_shiptophone  AS phone   
+
 <? endif ?>
 FROM <? if exists("byLocation") ?>
        invdetail, invhist, itemsite, item
@@ -31,6 +44,10 @@ FROM <? if exists("byLocation") ?>
        lshist (<? value("itemid") ?>,<? value("warehouseid") ?>,<? value("lotSerial") ?>,
                <? value("pattern") ?>,<? value("transType") ?>,<? value("startDate") ?>,
                <? value("endDate") ?>,<? value("trace") ?>,1)
+         LEFT OUTER JOIN cohead ON (lshist_transtype = 'SH' AND 
+                                    SUBSTRING(lshist_ordernumber FROM 1 FOR 2) = 'SO') AND
+                                    (cohead_number = TRIM(SUBSTRING(lshist_ordernumber FROM '-.*-'), '-'))
+         LEFT OUTER JOIN custinfo ON (cust_id=cohead_cust_id)
      <? endif ?>
 WHERE (
 <? if exists("byLocation") ?>

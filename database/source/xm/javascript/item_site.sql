@@ -69,17 +69,17 @@ select xt.install_js('XM','ItemSite','xtuple', $$
 
         switch (param.attribute) {
           case "customer":
-            customerId = XT.Data.getId(data.fetchOrm('XM', 'CustomerProspectRelation'), param.value);
-            accountId = XT.Data.getId(data.fetchOrm('XM', 'AccountRelation'), param.value);
+            customerId = XT.Data.getId(XT.Data.fetchOrm('XM', 'CustomerProspectRelation'), param.value);
+            accountId = XT.Data.getId(XT.Data.fetchOrm('XM', 'AccountRelation'), param.value);
             return false;
           case "shipto":
-            shiptoId = XT.Data.getId(data.fetchOrm('XM', 'CustomerShipto'), param.value);
+            shiptoId = XT.Data.getId(XT.Data.fetchOrm('XM', 'CustomerShipto'), param.value);
             return false;
           case "effectiveDate":
             effectiveDate = param.value;
             return false;
           case "vendor":
-            vendorId = XT.Data.getId(data.fetchOrm('XM', 'VendorRelation'), param.value);
+            vendorId = XT.Data.getId(XT.Data.fetchOrm('XM', 'VendorRelation'), param.value);
             return false;
           default:
             return true;
@@ -90,61 +90,64 @@ select xt.install_js('XM','ItemSite','xtuple', $$
 
       if (includeNumberBarcodeAliasParam) {
         data.addWhereClauseDynamicExtension(nameSpace, type, function (originPayload) {
+          var extnSql = '';
           var literalIndex = data.whereLiteralValues.length + 1;
           var whereClause = data.buildWhereClause(originPayload, includeNumberBarcodeAliasParam, literalIndex);
-          Array.prototype.push.apply(data.whereLiteralValues, whereClause.whereLiteralValues);
 
-          /* The above `includeNumberBarcodeAliasParam` will produce a clause like:
-           *
-           *   AND (false
-           *     OR number ~^ $1
-           *     OR barcode ~^ $1
-           *     -- Plus any additional param.attributes here.
-           *   )
-           *
-           * Trim the trailing `)\n` and spaces off so we can add the `OR id IN (` alias clause below.
-           */
-          var trimmedClause = whereClause.whereClause.trim();
-          var extnSql = '  ' + trimmedClause.substr(0, (trimmedClause.length - 1)) + /* Remove the `)` from the end. */
+          if (whereClause && whereClause.whereLiteralValues && whereClause.whereLiteralValues.length > 0) {
+            Array.prototype.push.apply(data.whereLiteralValues, whereClause.whereLiteralValues);
+
+            /* The above `includeNumberBarcodeAliasParam` will produce a clause like:
+             *
+             *   (
+             *     number ~^ $1
+             *     OR barcode ~^ $1
+             *     -- Plus any additional param.attributes here.
+             *   )
+             *
+             * Trim the trailing `)\n` and spaces off so we can add the `OR id IN (` alias clause below.
+             */
+            var trimmedClause = whereClause.whereClause.trim();
+            if (trimmedClause.indexOf(')', trimmedClause.length - 1) !== -1) {
+              extnSql = '  AND ' + trimmedClause.substr(0, (trimmedClause.length - 1)) + /* Remove the `)` from the end. */
                         '    OR id IN (\n' +
                         '      SELECT\n' +
                         '        itemsite_id AS id\n' +
                         '      FROM itemsite\n' +
-                        '      WHERE true\n' +
-                        '        AND itemsite_item_id IN (\n' +
-                        '          SELECT\n' +
-                        '            itemalias_item_id\n' +
-                        '          FROM itemalias\n' +
-                        '          WHERE true\n' +
-                        '            AND itemalias_number ~^ $' + data.whereLiteralValues.length + '\n' +
-                        '            AND (false\n' +
-                        '              OR itemalias_crmacct_id IS NULL\n' +
-                        '              OR itemalias_crmacct_id = $' + data.whereLiteralValues.push(accountId) + '\n' +
-                        '            )\n' +
-                        '        )\n' +
+                        '      JOIN (\n' +
+                        '        SELECT\n' +
+                        '          itemalias_item_id AS itemsite_item_id\n' +
+                        '        FROM itemalias\n' +
+                        '        WHERE true\n' +
+                        '          AND itemalias_number ~^ $' + data.whereLiteralValues.length + '\n' +
+                        '          AND (false\n' +
+                        '            OR itemalias_crmacct_id IS NULL\n' +
+                        '            OR itemalias_crmacct_id = $' + data.whereLiteralValues.push(accountId) + '\n' +
+                        '          )\n' +
+                        '      ) AS itemalias_item_id USING (itemsite_item_id)\n' +
                         '    )\n' +
-                        '  )\n';
+                        '  )\n'; /* Add the removed `)` back. */
+
+            }
+          }
+
           return extnSql;
         });
       }
 
       /* If customer passed, restrict results to item sites allowed to be sold to that customer */
       if (customerId || shiptoId) {
-        data.addWhereClauseDynamicExtension(nameSpace, type, function (originPayload) {
-          var extSql =  '  -- Added by addWhereClauseDynamicExtension\n' +
-                        '  AND id IN (\n' +
-                        '    SELECT\n' +
-                        '      itemsite_id AS id\n' +
-                        '    FROM itemsite\n' +
-                        '    WHERE true\n' +
-                        '      AND itemsite_item_id IN (\n' +
-                        '        SELECT custitem(\n' +
-                        '          $' + data.whereLiteralValues.push(customerId) + ',\n' +
-                        '          $' + data.whereLiteralValues.push(shiptoId) + ',\n' +
-                        '          $' + data.whereLiteralValues.push(effectiveDate) + '\n' +
-                        '        )\n' +
-                        '      )\n' +
-                        '  )\n';
+        data.addJoinClauseDynamicExtension(nameSpace, type, function (originPayload) {
+          var extSql =  'JOIN (\n' +
+                        '  SELECT\n' +
+                        '    itemsite_id AS id\n' +
+                        '  FROM itemsite\n' +
+                        '  JOIN custitem(\n' +
+                        '    $' + data.whereLiteralValues.push(customerId) + ',\n' +
+                        '    $' + data.whereLiteralValues.push(shiptoId) + ',\n' +
+                        '    $' + data.whereLiteralValues.push(effectiveDate) + '\n' +
+                        '  ) AS itemsite_item_id USING (itemsite_item_id)\n' +
+                        ') AS cust_itemsites USING (id)\n';
 
           return extSql;
         });
@@ -152,25 +155,28 @@ select xt.install_js('XM','ItemSite','xtuple', $$
 
       /* If vendor passed and vendor can only supply against defined item sources, then restrict results. */
       if (vendorId) {
-        data.addWhereClauseDynamicExtension(nameSpace, type, function (originPayload) {
-          var extSql =  '  -- Added by addWhereClauseDynamicExtension\n' +
-                        '  AND id IN (\n' +
-                        '    SELECT\n' +
-                        '      itemsite_id AS id\n' +
-                        '    FROM itemsite\n' +
-                        '    WHERE true\n' +
-                        '      AND itemsite_item_id IN (\n' +
-                        '        SELECT\n' +
-                        '          itemsrc_item_id\n' +
-                        '        FROM itemsrc\n' +
-                        '        WHERE true\n' +
-                        '          AND itemsrc_active\n' +
-                        '          AND itemsrc_vend_id = $' + data.whereLiteralValues.push(vendorId) + '\n' +
-                        '      )\n' +
-                        '  )\n';
+        var isItemSourceRequiredSql = 'SELECT vend_restrictpurch FROM vendinfo WHERE vend_id = $1';
+        var isItemSourceRequired = plv8.execute(isItemSourceRequiredSql, [vendorId])[0];
 
-          return extSql;
-        });
+        if (isItemSourceRequired && isItemSourceRequired.vend_restrictpurch) {
+          data.addJoinClauseDynamicExtension(nameSpace, type, function (originPayload) {
+            var extSql =  'JOIN (\n' +
+                          '  SELECT\n' +
+                          '    itemsite_id AS id\n' +
+                          '  FROM itemsite\n' +
+                          '  JOIN (\n' +
+                          '    SELECT\n' +
+                          '      itemsrc_item_id AS itemsite_item_id\n' +
+                          '    FROM itemsrc\n' +
+                          '    WHERE true\n' +
+                          '      AND itemsrc_active\n' +
+                          '      AND itemsrc_vend_id = $' + data.whereLiteralValues.push(vendorId) + '\n' +
+                          '  ) AS itemsite_item_id USING (itemsite_item_id)\n' +
+                          ') AS vend_itemsrc USING (id)\n';
+
+            return extSql;
+          });
+        }
       }
     }
 

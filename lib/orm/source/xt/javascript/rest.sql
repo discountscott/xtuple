@@ -126,7 +126,16 @@ select xt.install_js('XT','Rest','xtuple', $$
              '.' + dataHash.type + '.' + f + ' not found.');
         }
 
-        ret = obj.isDispatchable ? method() : false;
+        XT.encryptionKey = dataHash.encryptionKey;
+
+        try {
+          ret = obj.isDispatchable ? method() : false;
+          delete XT.encryptionKey;
+        } catch(e) {
+          /* Ensure the encryptionKey is deleted when there is an error. */
+          delete XT.encryptionKey;
+          throw e;
+        }
 
         /**
          * Remove the requirement of passing 'isJSON' around.

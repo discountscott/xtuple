@@ -92,6 +92,9 @@
               JOIN itemgrp ON (itemgrp_id=itemgrpitem_itemgrp_id AND itemgrp_id=<? value("itemgrp_id") ?>)
  <? endif ?>
  WHERE (TRUE
+ <? if exists("search_pattern") ?> 
+    AND ((item_number ~* <? value("search_pattern") ?>) OR (item_descrip1 || item_descrip2 ~* <? value("search_pattern") ?>))
+ <? endif ?>
  <? if exists("item_id") ?>
     AND (itemsite.itemsite_item_id=<? value("item_id") ?>)
  <? endif ?>

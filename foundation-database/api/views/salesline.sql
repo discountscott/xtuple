@@ -68,7 +68,7 @@ COMMENT ON VIEW api.salesline IS 'Sales Order Line Item';
 --Rules
 
 CREATE OR REPLACE RULE "_INSERT" AS
-    ON INSERT TO api.salesline DO INSTEAD  SELECT insertsalesline(new.*) AS insertsalesline;
+    ON INSERT TO api.salesline DO INSTEAD  SELECT api.insertsalesline(new.*) AS insertsalesline;
 
 CREATE OR REPLACE RULE "_UPDATE" AS 
     ON UPDATE TO api.salesline DO INSTEAD

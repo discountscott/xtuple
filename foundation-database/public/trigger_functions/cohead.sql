@@ -553,6 +553,29 @@ BEGIN
     WHERE (pohead_id=poitem_pohead_id);
   END IF;
 
+  -- update shipto address on any associated drop ship POs
+  IF (COALESCE(NEW.cohead_shiptoname, TEXT('')) <> COALESCE(OLD.cohead_shiptoname, TEXT('')) OR
+      COALESCE(NEW.cohead_shiptoaddress1, TEXT('')) <> COALESCE(OLD.cohead_shiptoaddress1, TEXT('')) OR
+      COALESCE(NEW.cohead_shiptoaddress2, TEXT('')) <> COALESCE(OLD.cohead_shiptoaddress2, TEXT('')) OR
+      COALESCE(NEW.cohead_shiptoaddress3, TEXT('')) <> COALESCE(OLD.cohead_shiptoaddress3, TEXT('')) OR
+      COALESCE(NEW.cohead_shiptocity, TEXT('')) <> COALESCE(OLD.cohead_shiptocity, TEXT('')) OR
+      COALESCE(NEW.cohead_shiptostate, TEXT('')) <> COALESCE(OLD.cohead_shiptostate, TEXT('')) OR
+      COALESCE(NEW.cohead_shiptozipcode, TEXT('')) <> COALESCE(OLD.cohead_shiptozipcode, TEXT('')) OR
+      COALESCE(NEW.cohead_shiptocountry, TEXT('')) <> COALESCE(OLD.cohead_shiptocountry, TEXT('')) ) THEN
+    UPDATE pohead
+      SET pohead_shiptoname=NEW.cohead_shiptoname,
+          pohead_shiptoaddress1=NEW.cohead_shiptoaddress1,
+          pohead_shiptoaddress2=NEW.cohead_shiptoaddress2,
+          pohead_shiptoaddress3=NEW.cohead_shiptoaddress3,
+          pohead_shiptocity=NEW.cohead_shiptocity,
+          pohead_shiptostate=NEW.cohead_shiptostate,
+          pohead_shiptozipcode=NEW.cohead_shiptozipcode,
+          pohead_shiptocountry=NEW.cohead_shiptocountry
+    FROM poitem JOIN coitem ON (coitem_cohead_id=NEW.cohead_id AND coitem_order_type='P' AND coitem_order_id=poitem_id)
+    WHERE (pohead_id=poitem_pohead_id)
+      AND (pohead_dropship);
+  END IF;
+
   RETURN NEW;
 END;
 $$ LANGUAGE 'plpgsql';

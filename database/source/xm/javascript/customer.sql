@@ -39,6 +39,7 @@ select xt.install_js('XM','Customer','xtuple', $$
     options = options || {};
     var sql = "select itemipsprice(item_id, cust_id, $3, $4, $5, $6, $7, $8::date, $9::date, $10) as result " +
               "from custinfo, item where item_number = $1 and cust_number = $2",
+      getUomNameSql = "SELECT uom_name FROM uom WHERE uom_id = $1;",
       today = new Date(),
       shiptoId,
       quantityUnitId,
@@ -81,7 +82,24 @@ select xt.install_js('XM','Customer','xtuple', $$
     }
     result = plv8.execute(sql, [itemId, customerId, shiptoId, parseFloat(quantity), quantityUnitId, priceUnitId, currencyId, effective, asOf, siteId])[0].result;
 
-    result = { price: result.itemprice_price, type: result.itemprice_type };
+    result = {
+      price: result.itemprice_price,
+      list: result.itemprice_listprice,
+      discountPercent: (result.itemprice_listprice - result.itemprice_price) / result.itemprice_listprice,
+      method: result.itemprice_method,
+      type: result.itemprice_type,
+      sale: result.itemprice_sale,
+      priceSchedule: result.itemprice_schedule,
+      assignment: result.itemprice_assignment,
+      basis: result.itemprice_basis,
+      basisType: result.itemprice_basistype,
+      modifierPercent: result.itemprice_modifierpct,
+      modifierAmount: result.itemprice_modifieramt,
+      qtyBreak: result.itemprice_qtybreak,
+      qtyUom: result.itemprice_qty_uom_id ? plv8.execute(getUomNameSql, [result.itemprice_qty_uom_id])[0].uom_name : null,
+      priceUom: result.itemprice_price_uom_id ? plv8.execute(getUomNameSql, [result.itemprice_price_uom_id])[0].uom_name : null,
+      exclusive: result.itemprice_exclusive
+    };
 
     return result;
   };

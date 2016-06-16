@@ -1,8 +1,8 @@
 <!DOCTYPE openRPTDef>
 <report>
- <title>Credit Memo</title>
+ <title>Sales Credit</title>
  <name>CreditMemo</name>
- <description>Sales Module Credit Memo with Logo and CM Currency</description>
+ <description>Sales Credit with Logo and CM Currency</description>
  <parameter default="" listtype="dynamic" type="string" active="true" name="cmhead_id">
   <description></description>
   <query>select cmhead_id, cmhead_number from cmhead;</query>
@@ -652,7 +652,7 @@ WHERE ((image_name='logo'));</sql>
    </font>
    <right/>
    <vcenter/>
-   <string>Credit Memo</string>
+   <string>Sales Credit</string>
   </label>
   <field>
    <rect>

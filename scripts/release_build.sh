@@ -177,114 +177,87 @@ done
 
 cd $XTUPLEDIR
 rm -rf scripts/output
-npm run-script build-basic-postbooks-package-sql
-npm run-script build-basic-empty
-npm run-script build-basic-postbooks-demo
-npm run-script build-basic-quickstart
 
-cd ${XTUPLEDIR}/../private-extensions
-npm run-script build-basic-manufacturing-package-sql
-npm run-script build-basic-manufacturing-empty
-npm run-script build-basic-manufacturing-quickstart
-npm run-script build-basic-manufacturing-demo
-npm run-script build-basic-distribution-package-sql
-npm run-script build-basic-distribution-empty
-npm run-script build-basic-distribution-quickstart
+MODES="upgrade install"
+EDITIONS="postbooks manufacturing distribution"
+DATABASES="empty quickstart demo"
+PACKAGES="inventory commercialcore"
 
-#postbooks upgrade
-cd ${XTUPLEDIR}
-mkdir scripts/output/postbooks-upgrade-$MAJ$MIN$PAT
-cp scripts/xml/postbooks_package.xml scripts/output/postbooks-upgrade-$MAJ$MIN$PAT/package.xml
-cp scripts/output/postbooks_upgrade.sql scripts/output/postbooks-upgrade-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf postbooks-upgrade-$MAJ$MIN$PAT.gz postbooks-upgrade-$MAJ$MIN$PAT/
+for MODE in $MODES ; do
+  for PACKAGE in $EDITIONS $PACKAGES ; do
+    if [ "$MODE" = install ] ; then
+      MANIFESTNAME=frozen_manifest.js
+    else
+      MANIFESTNAME=manifest.js
+    fi
+    if [ "$PACKAGE" = postbooks ] ; then
+      MANIFESTDIR=foundation-database
+    else
+      MANIFESTDIR=../private-extensions/source/$PACKAGE/foundation-database
+    fi
+    if [ "$PACKAGE" != postbooks -o "$MODE" != install ] ; then
+      scripts/explode_manifest.js -m $MANIFESTDIR/$MANIFESTNAME -n $PACKAGE-$MODE.sql
+    fi
+  done
+done
 
-#distribution upgrade
-cd ${XTUPLEDIR}
-mkdir scripts/output/distribution-upgrade-$MAJ$MIN$PAT
-cp scripts/xml/distribution_package.xml scripts/output/distribution-upgrade-$MAJ$MIN$PAT/package.xml
-cp scripts/output/postbooks_upgrade.sql scripts/output/distribution-upgrade-$MAJ$MIN$PAT
-cp scripts/output/inventory_upgrade.sql scripts/output/distribution-upgrade-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_upgrade.sql scripts/output/distribution-upgrade-$MAJ$MIN$PAT
-cp scripts/output/distribution_upgrade.sql scripts/output/distribution-upgrade-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf distribution-upgrade-$MAJ$MIN$PAT.gz distribution-upgrade-$MAJ$MIN$PAT/
+for EDITION in $EDITIONS ; do
+  for DATABASE in $DATABASES ; do
+    if [ "$EDITION" != distribution -o "$DATABASE" != demo ] ; then
+      scripts/build_app.js -d $EDITION"_"$DATABASE --databaseonly -e foundation-database -i -s foundation-database/$DATABASE"_"data.sql
+      if [ "$EDITION" != postbooks ] ; then
+        for PACKAGE in $PACKAGES $EDITION ; do
+          scripts/build_app.js -d $EDITION"_"$DATABASE --databaseonly -e ../private-extensions/source/$PACKAGE/foundation-database -f
+        done
+      fi
+    fi
+  done
+done
 
-#distribution install
-cd ${XTUPLEDIR}
-mkdir scripts/output/distribution-install-$MAJ$MIN$PAT
-cp scripts/xml/distribution_install.xml scripts/output/distribution-install-$MAJ$MIN$PAT/package.xml
-cp scripts/output/postbooks_upgrade.sql scripts/output/distribution-install-$MAJ$MIN$PAT
-cp scripts/output/inventory_basic_install.sql scripts/output/distribution-install-$MAJ$MIN$PAT
-cp scripts/output/inventory_upgrade.sql scripts/output/distribution-install-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_basic_install.sql scripts/output/distribution-install-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_upgrade.sql scripts/output/distribution-install-$MAJ$MIN$PAT
-cp scripts/output/distribution_basic_install.sql scripts/output/distribution-install-$MAJ$MIN$PAT
-cp scripts/output/distribution_upgrade.sql scripts/output/distribution-install-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf distribution-install-$MAJ$MIN$PAT.gz distribution-install-$MAJ$MIN$PAT/
-
-#manufacturing upgrade
-cd ${XTUPLEDIR}
-mkdir scripts/output/manufacturing-upgrade-$MAJ$MIN$PAT
-cp scripts/xml/xtmfg_package.xml scripts/output/manufacturing-upgrade-$MAJ$MIN$PAT/package.xml
-cp scripts/output/postbooks_upgrade.sql scripts/output/manufacturing-upgrade-$MAJ$MIN$PAT
-cp scripts/output/inventory_upgrade.sql scripts/output/manufacturing-upgrade-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_upgrade.sql scripts/output/manufacturing-upgrade-$MAJ$MIN$PAT
-cp scripts/output/manufacturing_upgrade.sql scripts/output/manufacturing-upgrade-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf manufacturing-upgrade-$MAJ$MIN$PAT.gz manufacturing-upgrade-$MAJ$MIN$PAT/
-
-#manufacturing install
-cd ${XTUPLEDIR}
-mkdir scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cp scripts/xml/xtmfg_install.xml scripts/output/manufacturing-install-$MAJ$MIN$PAT/package.xml
-cp scripts/output/postbooks_upgrade.sql scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cp scripts/output/inventory_basic_install.sql scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cp scripts/output/inventory_upgrade.sql scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_basic_install.sql scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_upgrade.sql scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cp scripts/output/manufacturing_basic_install.sql scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cp scripts/output/manufacturing_upgrade.sql scripts/output/manufacturing-install-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf manufacturing-install-$MAJ$MIN$PAT.gz manufacturing-install-$MAJ$MIN$PAT/
-
-#add-manufacturing-to-dist
-cd ${XTUPLEDIR}
-mkdir scripts/output/add-manufacturing-to-distribution-$MAJ$MIN$PAT
-cp scripts/xml/xtmfg_install_to_dist.xml scripts/output/add-manufacturing-to-distribution-$MAJ$MIN$PAT/package.xml
-cp scripts/output/manufacturing_basic_install.sql scripts/output/add-manufacturing-to-distribution-$MAJ$MIN$PAT
-cp scripts/output/manufacturing_upgrade.sql scripts/output/add-manufacturing-to-distribution-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf add-manufacturing-to-distribution-$MAJ$MIN$PAT.gz add-manufacturing-to-distribution-$MAJ$MIN$PAT/
-
-#enterprise upgrade
-cd ${XTUPLEDIR}
-mkdir scripts/output/enterprise-upgrade-$MAJ$MIN$PAT
-cp scripts/xml/ent_package.xml scripts/output/enterprise-upgrade-$MAJ$MIN$PAT/package.xml
-cp scripts/output/postbooks_upgrade.sql scripts/output/enterprise-upgrade-$MAJ$MIN$PAT
-cp scripts/output/inventory_upgrade.sql scripts/output/enterprise-upgrade-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_upgrade.sql scripts/output/enterprise-upgrade-$MAJ$MIN$PAT
-cp scripts/output/distribution_upgrade.sql scripts/output/enterprise-upgrade-$MAJ$MIN$PAT
-cp scripts/output/manufacturing_upgrade.sql scripts/output/enterprise-upgrade-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf enterprise-upgrade-$MAJ$MIN$PAT.gz enterprise-upgrade-$MAJ$MIN$PAT/
-
-#enterprise install
-cd ${XTUPLEDIR}
-mkdir scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/xml/ent_install.xml scripts/output/enterprise-install-$MAJ$MIN$PAT/package.xml
-cp scripts/output/postbooks_upgrade.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/inventory_basic_install.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/inventory_upgrade.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_basic_install.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/commercialcore_upgrade.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/distribution_basic_install.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/distribution_upgrade.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/manufacturing_basic_install.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cp scripts/output/manufacturing_upgrade.sql scripts/output/enterprise-install-$MAJ$MIN$PAT
-cd scripts/output
-tar -zcvf enterprise-install-$MAJ$MIN$PAT.gz enterprise-install-$MAJ$MIN$PAT/
+for EDITION in $EDITIONS enterprise ; do
+  if [ "$EDITION" = manufacturing ] ; then
+    MODES="$MODES add"
+  fi
+  for MODE in $MODES ; do
+    if [ "$EDITION" != postbooks -o "$MODE" != install ] ; then
+      cd ${XTUPLEDIR}
+      if [ "$MODE" = add ] ; then
+        NAME=add-manufacturing-to-distribution
+      else
+        NAME=$EDITION-$MODE
+      fi
+      FULLNAME=$NAME-$MAJ$MIN$PAT
+      mkdir scripts/output/$FULLNAME
+      cp scripts/xml/$NAME.xml scripts/output/$FULLNAME/package.xml
+      SUBPACKAGES=postbooks
+      if [ "$EDITION" != postbooks ] ; then
+        SUBPACKAGES="$SUBPACKAGES $PACKAGES"
+      fi
+      if [ "$EDITION" != enterprise ] ; then
+        SUBPACKAGES="$SUBPACKAGES $EDITION"
+      else
+        SUBPACKAGES="$SUBPACKAGES manufacturing distribution"
+      fi
+      SUBMODES=upgrade
+      if [ $MODE = install -o $MODE = add ] ; then
+        SUBMODES="$SUBMODES install"
+      fi
+      if [ $MODE = add ] ; then
+        SUBPACKAGES=manufacturing
+      fi
+      for SUBPACKAGE in $SUBPACKAGES ; do
+        for SUBMODE in $SUBMODES ; do
+          if [ "$SUBPACKAGE" != postbooks -o "$SUBMODE" != install ] ; then
+            cp scripts/output/$SUBPACKAGE-$SUBMODE.sql scripts/output/$FULLNAME
+          fi
+        done
+      done
+      cd scripts/output
+      tar -zcvf $FULLNAME.gz $FULLNAME/
+    fi
+  done
+  MODES="upgrade install"
+done
 
 cd ${XTUPLEDIR}
 
@@ -298,37 +271,39 @@ awk '/databaseServer: {/,/}/ {
     }' node-datasource/config.js > scripts/output/config.js
 
 
-DB_LIST="postbooks_demo empty quickstart distempty distquickstart mfgempty mfgquickstart mfgdemo";
-for DB in $DB_LIST ; do
-  CNT=0
-  while [ $CNT -lt ${#CONFIG[*]} ] ; do
-    MODULE=$(echo ${CONFIG[$CNT]} | awk '{ print $1 }')
-    MODULESRCDIR=$XTUPLEDIR/../$MODULE/$(getConfig $MODULE source)
-    if [ -d $MODULESRCDIR ] ; then
-      scripts/build_app.js -c scripts/output/config.js -e $MODULESRCDIR -d $DB
+for EDITION in $EDITIONS ; do
+  for DATABASE in $DATABASES ; do
+    if [ "$EDITION" != distribution -o "$DATABASE" != demo ] ; then
+      DB=$EDITION"_"$DATABASE
+      CNT=0
+      while [ $CNT -lt ${#CONFIG[*]} ] ; do
+        MODULE=$(echo ${CONFIG[$CNT]} | awk '{ print $1 }')
+        MODULESRCDIR=$XTUPLEDIR/../$MODULE/$(getConfig $MODULE source)
+        if [ -d $MODULESRCDIR ] ; then
+          scripts/build_app.js -c scripts/output/config.js -e $MODULESRCDIR -d $DB
+        fi
+        CNT=$(($CNT + 1))
+      done
+      /usr/bin/pg_dump --host $HOST --username $ADMIN --port $PORT --format c --file $DB-$MAJ.$MIN.$PAT.backup $DB
     fi
-    CNT=$(($CNT + 1))
   done
-  /usr/bin/pg_dump --host $HOST --username $ADMIN --port $PORT --format c --file $DB-$MAJ.$MIN.$PAT.backup $DB
 done
 
 #cleanup
 cd ${XTUPLEDIR}
-rm -rf scripts/output/postbooks-upgrade-$MAJ$MIN$PAT/
-rm -rf scripts/output/postbooks_upgrade.sql
-rm -rf scripts/output/distribution-install-$MAJ$MIN$PAT/
-rm -rf scripts/output/distribution-upgrade-$MAJ$MIN$PAT/
-rm -rf scripts/output/distribution_upgrade.sql
-rm -rf scripts/output/distribution_basic_install.sql
-rm -rf scripts/output/inventory_basic_install.sql
-rm -rf scripts/output/inventory_upgrade.sql
-rm -rf scripts/output/commercialcore_basic_install.sql
-rm -rf scripts/output/commercialcore_upgrade.sql
-rm -rf scripts/output/manufacturing-install-$MAJ$MIN$PAT/
-rm -rf scripts/output/manufacturing-upgrade-$MAJ$MIN$PAT/
+for PACKAGE in $EDITIONS $PACKAGES ; do
+  for MODE in $MODES ; do
+    if [ $PACKAGE != postbooks -o $MODE != install ] ; then
+      rm -rf scripts/output/$EDITION-$MODE.sql
+    fi
+  done
+done
+for EDITION in $EDITIONS enterprise ; do
+  for MODE in $MODES ; do
+    if [ $EDITION != postbooks -o $MODE != install ] ; then
+      rm -rf scripts/output/$EDITION-$MODE-$MAJ$MIN$PAT/
+    fi
+  done
+done
 rm -rf scripts/output/add-manufacturing-to-distribution-$MAJ$MIN$PAT/
-rm -rf scripts/output/enterprise-upgrade-$MAJ$MIN$PAT/
-rm -rf scripts/output/enterprise-install-$MAJ$MIN$PAT/
-rm -rf scripts/output/manufacturing_basic_install.sql
-rm -rf scripts/output/manufacturing_upgrade.sql
 rm -rf scripts/output/config.js

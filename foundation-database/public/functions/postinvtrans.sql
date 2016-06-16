@@ -1,3 +1,4 @@
+DROP FUNCTION IF EXISTS postInvTrans(INTEGER, TEXT, NUMERIC, TEXT, TEXT, TEXT, TEXT, TEXT, INTEGER, INTEGER, INTEGER, TIMESTAMP WITH TIME ZONE, NUMERIC, INTEGER);
 CREATE OR REPLACE FUNCTION postInvTrans(pItemsiteId    INTEGER,
                                         pTransType     TEXT,
                                         pQty           NUMERIC,
@@ -12,7 +13,8 @@ CREATE OR REPLACE FUNCTION postInvTrans(pItemsiteId    INTEGER,
                                         pTimestamp     TIMESTAMP WITH TIME ZONE
                                                        DEFAULT CURRENT_TIMESTAMP,
                                         pCostOvrld     NUMERIC DEFAULT NULL,
-                                        pInvhistid     INTEGER DEFAULT NULL)
+                                        pInvhistid     INTEGER DEFAULT NULL,
+                                        pPrevQty       NUMERIC DEFAULT NULL)
   RETURNS INTEGER AS $$
 -- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple. 
 -- See www.xtuple.com/CPAL for the full text of the software license.
@@ -123,8 +125,8 @@ BEGIN
       invhist_series )
   SELECT
     _invhistid, itemsite_id, pTransType, _timestamp,
-    pQty, itemsite_qtyonhand,
-    (itemsite_qtyonhand + (_sense * pQty)),
+    pQty, (itemsite_qtyonhand + (_sense * COALESCE(pPrevQty, 0.0))),
+    (itemsite_qtyonhand + (_sense * pQty) + (_sense * COALESCE(pPrevQty, 0.0))),
     itemsite_costmethod, itemsite_value,
     -- sanity check to ensure that value = 0 when qtyonhand = 0
     CASE WHEN ((itemsite_qtyonhand + (_sense * pQty))) = 0.0 THEN 0.0

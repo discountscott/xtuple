@@ -308,6 +308,21 @@ BEGIN
 
     UPDATE wo SET wo_womatl_id = newWo.womatl_id WHERE wo_id=_newwoid;
 
+  -- Copy WO characteristics from parent to child
+    DELETE FROM charass 
+    WHERE ((charass_target_type = 'WO') 
+     AND  (charass_target_id = _newwoid)
+     AND  (charass_char_id IN (SELECT charass_char_id
+                                FROM charass
+                                WHERE ((charass_target_type = 'WO')
+                                AND  (charass_target_id = pWoid)))));
+    
+    INSERT INTO charass (charass_target_type, charass_target_id, charass_char_id, charass_value, charass_default)
+      SELECT charass_target_type, _newwoid, charass_char_id, charass_value, charass_default
+      FROM charass 
+      WHERE ((charass_target_type = 'WO')
+        AND  (charass_target_id = pWoid));
+
   END LOOP;
 
   UPDATE wo

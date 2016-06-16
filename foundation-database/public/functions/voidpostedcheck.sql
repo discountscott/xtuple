@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION voidPostedCheck(INTEGER, INTEGER, DATE) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple. 
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple. 
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   pCheckid		ALIAS FOR $1;
@@ -126,8 +126,8 @@ BEGIN
                                           checkitem_amount * -1.0
                                      ELSE checkitem_amount END,
                                   _p.checkhead_checkdate) AS amount_check,
-                     apopen_id, apopen_doctype, apopen_docnumber, apopen_curr_rate, apopen_docdate,
-                     aropen_id, aropen_doctype, aropen_docnumber,
+                     apopen_id, apopen_doctype, apopen_docnumber, apopen_curr_id, apopen_curr_rate,
+                     apopen_docdate, aropen_id, aropen_doctype, aropen_docnumber,
                      checkitem_curr_id, checkitem_curr_rate,
                      COALESCE(checkitem_docdate, _p.checkhead_checkdate) AS docdate
               FROM (checkitem LEFT OUTER JOIN
@@ -239,14 +239,15 @@ BEGIN
             _exchGainTmp := ((_r.checkitem_amount / _r.apopen_curr_rate) - (_r.checkitem_amount/_p.checkhead_curr_rate));
           END IF;
         ELSE
-          -- unusual condition where bank overridden and different currency from voucher
-          -- this does not work for all situations
-          --IF (_r.apopen_docdate > _p.checkhead_checkdate) THEN
-          --  _exchGainTmp := ((_r.checkitem_amount/_r.checkitem_curr_rate) - (_r.checkitem_amount / _r.apopen_curr_rate)) * -1;
-          --ELSE
-          --  _exchGainTmp := ((_r.checkitem_amount / _r.apopen_curr_rate) - (_r.checkitem_amount/_r.checkitem_curr_rate));
-          --END IF;
-          _exchGainTmp := 0.0;
+          IF (_r.apopen_docdate > _p.checkhead_checkdate) THEN
+            _exchGainTmp := ((_r.checkitem_amount/_r.checkitem_curr_rate) - (_r.checkitem_amount / _r.apopen_curr_rate)) * -1;
+          ELSE
+            IF (_p.checkhead_curr_id <> basecurrid() AND _r.apopen_curr_id <> basecurrid()) THEN 
+              _exchGainTmp := 0;
+            ELSE  
+              _exchGainTmp := ((_r.checkitem_amount / _r.apopen_curr_rate) - (_r.checkitem_amount/_r.checkitem_curr_rate));
+            END IF;
+          END IF;
         END IF;
       ELSE
         SELECT arCurrGain(_r.aropen_id,_r.checkitem_curr_id, _r.checkitem_amount,

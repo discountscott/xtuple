@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION postInvoice(pInvcheadid INTEGER) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple.
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple.
 -- See www.xtuple.com/CPAL for the full text of the software license.
 BEGIN
   RETURN postInvoice(pInvcheadid, fetchJournalNumber('AR-IN'));
@@ -8,7 +8,7 @@ $$ LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION postInvoice(pInvcheadid INTEGER,
                                        pJournalNumber INTEGER) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple.
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple.
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   _itemlocSeries INTEGER;
@@ -24,7 +24,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION postInvoice(pInvcheadid INTEGER,
                                        pJournalNumber INTEGER,
                                        pItemlocSeries INTEGER) RETURNS INTEGER AS $$
--- Copyright (c) 1999-2014 by OpenMFG LLC, d/b/a xTuple.
+-- Copyright (c) 1999-2016 by OpenMFG LLC, d/b/a xTuple.
 -- See www.xtuple.com/CPAL for the full text of the software license.
 DECLARE
   _aropenid             INTEGER;
@@ -196,11 +196,12 @@ BEGIN
       cohist_shipdate, cohist_shipvia,
       cohist_ordernumber, cohist_ponumber, cohist_orderdate,
       cohist_doctype, cohist_invcnumber, cohist_invcdate,
-      cohist_qtyshipped, cohist_unitprice, cohist_unitcost,
+      cohist_qtyshipped, cohist_unitprice, cohist_unitcost, cohist_listprice,
       cohist_salesrep_id, cohist_commission, cohist_commissionpaid,
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -211,17 +212,19 @@ BEGIN
       _p.invchead_shipdate, _p.invchead_shipvia,
       COALESCE(_p.invchead_ordernumber, _r.cohead_number), _p.invchead_ponumber, _p.invchead_orderdate,
       'I', _p.invchead_invcnumber, _p.invchead_invcdate,
-      _r.qty, _r.unitprice, _r.unitcost,
+      _r.qty, _r.unitprice, _r.unitcost, _r.listprice,
       _p.invchead_salesrep_id, (_p.invchead_commission * _r.extprice), FALSE,
       _p.invchead_billto_name, _p.invchead_billto_address1,
       _p.invchead_billto_address2, _p.invchead_billto_address3,
       _p.invchead_billto_city, _p.invchead_billto_state, _p.invchead_billto_zipcode,
+      _p.invchead_billto_country, _p.invchead_shipto_country,
       _p.invchead_shipto_name, _p.invchead_shipto_address1,
       _p.invchead_shipto_address2, _p.invchead_shipto_address3,
       _p.invchead_shipto_city, _p.invchead_shipto_state,
       _p.invchead_shipto_zipcode, _p.invchead_curr_id,
       _p.sequence, _r.invcitem_taxtype_id, _p.invchead_taxzone_id,
       _p.invchead_shipzone_id, _p.invchead_saletype_id );
+
     INSERT INTO cohisttax
     ( taxhist_parent_id, taxhist_taxtype_id, taxhist_tax_id,
       taxhist_basis, taxhist_basis_tax_id, taxhist_sequence,
@@ -276,11 +279,12 @@ BEGIN
       cohist_shipdate, cohist_shipvia,
       cohist_ordernumber, cohist_ponumber, cohist_orderdate,
       cohist_doctype, cohist_invcnumber, cohist_invcdate,
-      cohist_qtyshipped, cohist_unitprice, cohist_unitcost,
+      cohist_qtyshipped, cohist_unitprice, cohist_unitcost, cohist_listprice,
       cohist_salesrep_id, cohist_commission, cohist_commissionpaid,
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -292,11 +296,12 @@ BEGIN
       _p.invchead_shipdate, _p.invchead_shipvia,
       COALESCE(_p.invchead_ordernumber, _r.cohead_number), _p.invchead_ponumber, _p.invchead_orderdate,
       'I', _p.invchead_invcnumber, _p.invchead_invcdate,
-      _r.qty, _r.unitprice, 0,
+      _r.qty, _r.unitprice, 0, _r.listprice,
       _p.invchead_salesrep_id, (_p.invchead_commission * _r.extprice), FALSE,
       _p.invchead_billto_name, _p.invchead_billto_address1,
       _p.invchead_billto_address2, _p.invchead_billto_address3,
       _p.invchead_billto_city, _p.invchead_billto_state, _p.invchead_billto_zipcode,
+      _p.invchead_billto_country, _p.invchead_shipto_country,
       _p.invchead_shipto_name, _p.invchead_shipto_address1,
       _p.invchead_shipto_address2, _p.invchead_shipto_address3,
       _p.invchead_shipto_city, _p.invchead_shipto_state,
@@ -353,11 +358,12 @@ BEGIN
       cohist_shipdate, cohist_shipvia,
       cohist_ordernumber, cohist_ponumber, cohist_orderdate,
       cohist_doctype, cohist_invcnumber, cohist_invcdate,
-      cohist_qtyshipped, cohist_unitprice, cohist_unitcost,
+      cohist_qtyshipped, cohist_unitprice, cohist_unitcost, cohist_listprice,
       cohist_salesrep_id, cohist_commission, cohist_commissionpaid,
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -369,11 +375,12 @@ BEGIN
       _p.invchead_shipdate, _p.invchead_shipvia,
       _p.invchead_ordernumber, _p.invchead_ponumber, _p.invchead_orderdate,
       'I', _p.invchead_invcnumber, _p.invchead_invcdate,
-      1, _p.invchead_freight, _p.invchead_freight,
+      1, _p.invchead_freight, _p.invchead_freight, 0.0,
       _p.invchead_salesrep_id, 0, FALSE,
       _p.invchead_billto_name, _p.invchead_billto_address1,
       _p.invchead_billto_address2, _p.invchead_billto_address3,
       _p.invchead_billto_city, _p.invchead_billto_state, _p.invchead_billto_zipcode,
+      _p.invchead_billto_country, _p.invchead_shipto_country,
       _p.invchead_shipto_name, _p.invchead_shipto_address1,
       _p.invchead_shipto_address2, _p.invchead_shipto_address3,
       _p.invchead_shipto_city, _p.invchead_shipto_state,
@@ -426,11 +433,12 @@ BEGIN
       cohist_shipdate, cohist_shipvia,
       cohist_ordernumber, cohist_ponumber, cohist_orderdate,
       cohist_doctype, cohist_invcnumber, cohist_invcdate,
-      cohist_qtyshipped, cohist_unitprice, cohist_unitcost,
+      cohist_qtyshipped, cohist_unitprice, cohist_unitcost, cohist_listprice,
       cohist_salesrep_id, cohist_commission, cohist_commissionpaid,
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -442,11 +450,12 @@ BEGIN
       _p.invchead_shipdate, _p.invchead_shipvia,
       _p.invchead_ordernumber, _p.invchead_ponumber, _p.invchead_orderdate,
       'I', _p.invchead_invcnumber, _p.invchead_invcdate,
-      1, _p.invchead_misc_amount, _p.invchead_misc_amount,
+      1, _p.invchead_misc_amount, _p.invchead_misc_amount, 0.0,
       _p.invchead_salesrep_id, 0, FALSE,
       _p.invchead_billto_name, _p.invchead_billto_address1,
       _p.invchead_billto_address2, _p.invchead_billto_address3,
       _p.invchead_billto_city, _p.invchead_billto_state, _p.invchead_billto_zipcode,
+      _p.invchead_billto_country, _p.invchead_shipto_country,
       _p.invchead_shipto_name, _p.invchead_shipto_address1,
       _p.invchead_shipto_address2, _p.invchead_shipto_address3,
       _p.invchead_shipto_city, _p.invchead_shipto_state,
@@ -465,11 +474,12 @@ BEGIN
       cohist_shipdate, cohist_shipvia,
       cohist_ordernumber, cohist_ponumber, cohist_orderdate,
       cohist_doctype, cohist_invcnumber, cohist_invcdate,
-      cohist_qtyshipped, cohist_unitprice, cohist_unitcost,
+      cohist_qtyshipped, cohist_unitprice, cohist_unitcost, cohist_listprice,
       cohist_salesrep_id, cohist_commission, cohist_commissionpaid,
       cohist_billtoname, cohist_billtoaddress1,
       cohist_billtoaddress2, cohist_billtoaddress3,
       cohist_billtocity, cohist_billtostate, cohist_billtozip,
+      cohist_billtocountry, cohist_shiptocountry,
       cohist_shiptoname, cohist_shiptoaddress1,
       cohist_shiptoaddress2, cohist_shiptoaddress3,
       cohist_shiptocity, cohist_shiptostate, cohist_shiptozip,
@@ -481,11 +491,12 @@ BEGIN
       _p.invchead_shipdate, _p.invchead_shipvia,
       _p.invchead_ordernumber, _p.invchead_ponumber, _p.invchead_orderdate,
       'I', _p.invchead_invcnumber, _p.invchead_invcdate,
-      1, 0.0, 0.0,
+      1, 0.0, 0.0, 0.0,
       _p.invchead_salesrep_id, 0, FALSE,
       _p.invchead_billto_name, _p.invchead_billto_address1,
       _p.invchead_billto_address2, _p.invchead_billto_address3,
       _p.invchead_billto_city, _p.invchead_billto_state, _p.invchead_billto_zipcode,
+      _p.invchead_billto_country, _p.invchead_shipto_country,
       _p.invchead_shipto_name, _p.invchead_shipto_address1,
       _p.invchead_shipto_address2, _p.invchead_shipto_address3,
       _p.invchead_shipto_city, _p.invchead_shipto_state,

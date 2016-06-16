@@ -14,12 +14,12 @@ BEGIN
   INSERT INTO ipshead 
   ( ipshead_id, ipshead_name, ipshead_descrip,
     ipshead_effective, ipshead_expires, 
-    ipshead_curr_id, ipshead_updated ) 
+    ipshead_curr_id, ipshead_updated, ipshead_listprice ) 
   SELECT _ipsheadid, orig.ipshead_name || (SELECT CAST((COUNT(cnt.ipshead_id)+1) AS text)
 				            FROM ipshead cnt
 				            WHERE (SUBSTRING(cnt.ipshead_name FROM 0 FOR char_length(orig.ipshead_name)+1) = orig.ipshead_name)),
 	 orig.ipshead_descrip, orig.ipshead_effective, orig.ipshead_expires, 
-	 orig.ipshead_curr_id, CURRENT_DATE
+	 orig.ipshead_curr_id, CURRENT_DATE, orig.ipshead_listprice
   FROM ipshead orig
   WHERE (orig.ipshead_id=pIpsheadId);
 

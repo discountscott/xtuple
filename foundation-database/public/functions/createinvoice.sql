@@ -82,7 +82,7 @@ BEGIN
   FOR _r IN SELECT coitem_id, coitem_linenumber, coitem_subnumber, coitem_custpn,
                    coitem_qtyord, cobill_qty,
                    coitem_qty_uom_id, coitem_qty_invuomratio,
-                   coitem_custprice, coitem_price,
+                   coitem_custprice, coitem_price, coitem_listprice,
                    coitem_price_uom_id, coitem_price_invuomratio,
                    coitem_memo, coitem_rev_accnt_id,
                    itemsite_item_id, itemsite_warehous_id,
@@ -101,7 +101,7 @@ BEGIN
       invcitem_custpn, invcitem_number, invcitem_descrip,
       invcitem_ordered, invcitem_billed,
       invcitem_qty_uom_id, invcitem_qty_invuomratio,
-      invcitem_custprice, invcitem_price,
+      invcitem_custprice, invcitem_price, invcitem_listprice,
       invcitem_price_uom_id, invcitem_price_invuomratio,
       invcitem_notes, invcitem_taxtype_id,
       invcitem_coitem_id, invcitem_rev_accnt_id )
@@ -112,7 +112,7 @@ BEGIN
       _r.coitem_custpn, '', '',
       _r.coitem_qtyord, _r.cobill_qty,
       _r.coitem_qty_uom_id, _r.coitem_qty_invuomratio,
-      _r.coitem_custprice, _r.coitem_price,
+      _r.coitem_custprice, _r.coitem_price, _r.coitem_listprice,
       _r.coitem_price_uom_id, _r.coitem_price_invuomratio,
       _r.coitem_memo, _r.cobill_taxtype_id,
       _r.coitem_id, _r.coitem_rev_accnt_id );

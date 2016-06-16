@@ -153,8 +153,17 @@ BEGIN
     _qry := 'SELECT taxhist_tax_id as tax_id, tax_code, tax_descrip, taxhist_tax, taxhist_sequence
              FROM vohead, voitemtax LEFT OUTER JOIN tax ON (taxhist_tax_id=tax_id)
              LEFT OUTER JOIN voitem ON (voitem_id=taxhist_parent_id)
-             WHERE voitem_vohead_id = ' || pOrderId || '
-             AND vohead_id = voitem_vohead_id ';
+             WHERE ((voitem_vohead_id = ' || pOrderId || ')
+             AND (vohead_id = voitem_vohead_id)
+             AND NOT (taxhist_reverse_charge)) 
+
+             UNION ALL
+             SELECT taxhist_tax_id as tax_id, tax_code, tax_descrip, taxhist_tax, taxhist_sequence
+             FROM voheadtax
+             JOIN tax ON (taxhist_tax_id=tax_id)
+             WHERE ( (taxhist_parent_id = ' || pOrderId || ')
+              AND (taxhist_taxtype_id NOT IN (getfreighttaxtypeid(),getadjustmenttaxtypeid()) ) ) 
+             ';
    ELSIF pOrderType = 'TO' AND (pDisplayType IN ('L','T')) THEN
     _qry := 'SELECT taxhist_tax_id as tax_id, tax_code, tax_descrip, taxhist_tax, taxhist_sequence
              FROM tohead, toitemtax LEFT OUTER JOIN tax ON (taxhist_tax_id=tax_id)
@@ -183,6 +192,7 @@ BEGIN
                AND (taxhist_taxtype_id=getadjustmenttaxtypeid()) )';
 
    END IF;
+
    FOR _y IN  EXECUTE _qry
    LOOP
      _row.taxdetail_tax_id=_y.tax_id;

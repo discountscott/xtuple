@@ -3,7 +3,7 @@
  <title>Purchase Order</title>
  <name>PurchaseOrder</name>
  <description>Selecting an Alt Address on the PO will cause the printed PO to display that address as the Ship To on the printed document.</description>
- <parameter default="999" active="true" listtype="static" type="string" name="pohead_id">
+ <parameter default="999" type="string" active="true" listtype="static" name="pohead_id">
   <description></description>
  </parameter>
  <watermark>
@@ -51,12 +51,12 @@
   <sql>SELECT poitem_linenumber,
        poitem_comments,
        poitem_linenumber AS f_line,
-       item_number,
+       COALESCE(item_number, expcat_code) AS item_number,
        poitem_vend_item_number, 
-       CASE WHEN (LENGTH(TRIM(BOTH '	' FROM poitem_vend_item_descrip)) &lt;= 0) THEN
+       COALESCE(CASE WHEN (LENGTH(TRIM(BOTH '	' FROM poitem_vend_item_descrip)) &lt;= 0) THEN
           (item_descrip1 || '' || item_descrip2)
        ELSE (poitem_vend_item_descrip)
-       END AS itemdescription,
+       END, expcat_descrip) AS itemdescription,
        formatQty(poitem_qty_ordered) AS f_ordered,
        CASE WHEN (poitem_vend_uom LIKE '') THEN (uom_name)
             ELSE (poitem_vend_uom)
@@ -68,6 +68,7 @@
 FROM poitem
 	LEFT OUTER JOIN itemsite ON (poitem_itemsite_id = itemsite_id)
 	LEFT OUTER JOIN (item JOIN uom ON (item_inv_uom_id=uom_id)) ON (itemsite_item_id = item_id)
+          LEFT OUTER JOIN expcat ON (poitem_expcat_id=expcat_id)
 WHERE 	(poitem_pohead_id=&lt;? value("pohead_id") ?>) 
 ORDER BY poitem_linenumber;</sql>
  </querysource>
@@ -1049,7 +1050,7 @@ WHERE
    <text>
     <rect>
      <x>150</x>
-     <y>5</y>
+     <y>6</y>
      <width>350</width>
      <height>17</height>
     </rect>

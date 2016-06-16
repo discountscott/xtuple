@@ -33,7 +33,7 @@ SELECT itemsite_id,
                      ELSE 0.0
                 END AS reorderlevel,
                 ib.*,
-                ((bomdata_qtyfxd::NUMERIC + bomdata_qtyper::NUMERIC * <? value("qty") ?>) * (1 + bomdata_scrap::NUMERIC)) AS pendalloc,
+                ((bomdata_qtyfxd::NUMERIC + bomdata_qtyreq::NUMERIC * <? value("qty") ?>) * (1 + bomdata_scrap::NUMERIC)) AS pendalloc,
                 (qtyAllocated(itemsite_id, DATE(<? value("date") ?>) + <? value("offset") ?>) -
                               ((bomdata_qtyfxd::NUMERIC + bomdata_qtyper::NUMERIC * <? value("origQtyOrd") ?>) *
                               (1 + bomdata_scrap::NUMERIC))) AS totalalloc,

@@ -27,6 +27,11 @@ SELECT ipsass_id,
        CASE WHEN (ipsass_saletype_id IS NOT NULL) THEN (SELECT saletype_descr FROM saletype WHERE (saletype_id=ipsass_saletype_id))
             ELSE TEXT('Any') END AS saletype,     
        ipshead_name 
-FROM ipsass, ipshead 
-WHERE (ipshead_id=ipsass_ipshead_id) 
+FROM ipsass JOIN ipshead ON (ipshead_id=ipsass_ipshead_id)
+WHERE (true)
+<? if exists("listpricesched") ?>
+  AND (ipshead_listprice)
+<? else ?>
+  AND (NOT ipshead_listprice)
+<? endif ?>
 ORDER BY custname, custtype; 

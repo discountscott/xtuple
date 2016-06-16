@@ -1,26 +1,32 @@
-<package id        = "distribution-upgrade-4100Beta"
-         version   = "4.10.0Beta"
+<package id        = "add-manufacturing-to-distribution-4100Beta2"
+         version   = "4.10.0Beta2"
          developer = "xTuple"
-         descrip   = "load PostBooks resources"
+         descrip   = "load Manufacturing resources"
          updater   = "2.2.4" >
 
   <prerequisite type = "query"
-                name = "Checking xTuple Edition" >
-    <query>SELECT fetchMetricText('Application') = 'Standard';</query>
-    <message>This package must be applied to a Distribution database.</message>
+                name = "Checking xTuple Edition - Distribution" >
+    <query>SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'xwd');</query>
+    <message>This package must be applied to a database containing the xwd schema.</message>
+  </prerequisite>
+
+  <prerequisite type = "query"
+                name = "Checking xTuple Edition - Manufacturing" >
+    <query>SELECT NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'xtmfg');</query>
+    <message>This package must be applied to a database that does not contain the xtmfg schema.</message>
   </prerequisite>
 
   <prerequisite type = "query"
                 name = "Checking for too-old xTuple ERP database version" >
     <query>SELECT compareVersion(fetchMetricText('ServerVersion'), '4.4.0') >= 0;</query>
-    <message>This package must be applied to a 4.4+ Distribution database.
+    <message>This package must be applied to a 4.4+ database.
     </message>
   </prerequisite>
 
   <prerequisite type = "query"
                 name = "Checking for too-new xTuple ERP database version" >
     <query>SELECT compareVersion(fetchMetricText('ServerVersion'), '4.10.1') = -1;</query>
-    <message>This package may not be applied to a database newer than 4.10.1.
+    <message>This package may not be applied to a database newer than 4.10.0.
     </message>
   </prerequisite>
 
@@ -50,20 +56,14 @@
     </message>
   </prerequisite>
 
- <prerequisite type = "query"
+  <prerequisite type = "query"
                name = "Checking for mobile-enabled schemas" >
     <query>SELECT NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'xm');</query>
     <message>This package may not be applied to a mobile-enabled database. Please see your system administrator or contact xTuple.
     </message>
   </prerequisite>
 
- <prerequisite type = "query"
-               name = "Checking for xwd schema" >
-    <query>SELECT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'xwd');</query>
-    <message>This package requires that XWD 240 package to be installed before continuing.</message>
-  </prerequisite>
-
- <prerequisite type = "query"
+  <prerequisite type = "query"
                name = "Checking for duplicate Credit Card payments on Sales Orders" >
     <query>
       WITH counter AS (SELECT COUNT(*) AS freq
@@ -79,28 +79,21 @@
 
   <prerequisite type = "query"
                 name = "Checking for Comment Type Source consistency - cmnttype" >
-    <query>SELECT BOOL_AND(cmnttype_id IS NOT NULL)
-                  FROM cmnttypesource
-                  LEFT OUTER JOIN cmnttype ON cmnttypesource_cmnttype_id = cmnttype_id;</query>
+     <query>SELECT BOOL_AND(cmnttype_id IS NOT NULL)
+              FROM cmnttypesource
+              LEFT OUTER JOIN cmnttype ON cmnttypesource_cmnttype_id = cmnttype_id;</query>
     <message>There are records in the cmnttypesource table with no matching cmnttype entries. Please see your system administrator or contact xTuple.</message>
   </prerequisite>
 
   <prerequisite type = "query"
                 name = "Checking for Comment Type Source consistency - source" >
-    <query>SELECT BOOL_AND(source_id IS NOT NULL)
-                  FROM cmnttypesource
-                  LEFT OUTER JOIN source ON cmnttypesource_source_id = source_id;</query>
+     <query>SELECT BOOL_AND(source_id IS NOT NULL)
+              FROM cmnttypesource
+              LEFT OUTER JOIN source ON cmnttypesource_source_id = source_id;</query>
     <message>There are records in the cmnttypesource table with no matching source entries. Please see your system administrator or contact xTuple.</message>
   </prerequisite>
 
- <prerequisite type="query" name="Checking xwd Package Version">
-     <query>SELECT TRUE FROM pkghead WHERE pkghead_name = 'xwd' AND (pkghead_version >= '2.4');</query>
-    <message>This package must be applied against the 2.4.0 version of the xwd package.</message>
-  </prerequisite>
-
-  <script file="postbooks_upgrade.sql" />
-  <script file="inventory_upgrade.sql" />
-  <script file="commercialcore_upgrade.sql" />
-  <script file="distribution_upgrade.sql" />
+  <script file="manufacturing-install.sql" />
+  <script file="manufacturing-upgrade.sql" />
 
 </package>

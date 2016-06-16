@@ -36,7 +36,7 @@ BEGIN
 -- Begin Main loop of Cash Receipt and Customer
   FOR _cashcust IN
    SELECT DISTINCT cashrcpt_id, 
-		CASE WHEN (cashrcpt_cust_id > 0) THEN cashrcpt_cust_id ELSE cashrcptitem_cust_id END as rcptcust,
+		COALESCE(cashrcpt_cust_id, cashrcptitem_cust_id, -1) AS rcptcust,
 		cashrcpt_number, cashrcpt_salescat_id
      FROM cashrcpt left outer join cashrcptitem on cashrcpt_id=cashrcptitem_cashrcpt_id
      WHERE cashrcpt_id = pCashrcptid
@@ -56,7 +56,7 @@ BEGIN
     END IF;
   END IF;
 
-  SELECT _cashcust.rcptcust AS cashrcpt_cust_id,   	-- we did this already!
+  SELECT _cashcust.rcptcust AS cashrcpt_cust_id,
          CASE WHEN (COALESCE(cashrcpt_cust_id,0) > 0)
 		      THEN (cust_number||'-'||cust_name) 
 	          ELSE (SELECT custgrp_name||'-'||custgrp_descrip FROM custgrp WHERE custgrp_id = cashrcpt_custgrp_id) 	
@@ -71,7 +71,7 @@ BEGIN
          findPrepaidAccount(_cashcust.rcptcust) AS prepaid_accnt_id,
          cashrcpt_usecustdeposit,
          COALESCE(cashrcpt_applydate, cashrcpt_distdate) AS applydate,
-	          cashrcpt_curr_id, cashrcpt_curr_rate, cashrcpt_posted, cashrcpt_void INTO _p
+	          cashrcpt_curr_id, cashrcpt_curr_rate, cashrcpt_posted, cashrcpt_void, cashrcpt_prj_id INTO _p
 	  FROM cashrcpt
 	  LEFT OUTER JOIN cashrcptitem ON cashrcpt_id = cashrcptitem_cashrcpt_id
 	  LEFT OUTER JOIN custinfo ON (cashrcpt_cust_id=cust_id)
@@ -247,8 +247,8 @@ BEGIN
 
        PERFORM insertIntoGLSeries( _sequence, 'A/R', 'CR',
                           (_r.aropen_doctype || '-' || _r.aropen_docnumber),
-                          CASE WHEN _r.aropen_doctype != 'R' THEN _arAccntid
-                          ELSE findDeferredAccount(_p.cashrcpt_cust_id) END,
+                          CASE WHEN _r.aropen_doctype != 'R' THEN getPrjAccntId(_p.cashrcpt_prj_id, _arAccntid)
+                          ELSE getPrjAccntId(_p.cashrcpt_prj_id, findDeferredAccount(_p.cashrcpt_cust_id)) END,
                           round(_r.cashrcptitem_amount_base + _exchGain, 2),
                           _p.cashrcpt_distdate, _p.custnote, pCashrcptid );
 
@@ -256,8 +256,8 @@ BEGIN
           PERFORM insertIntoGLSeries(_sequence, 'A/R', 'CR',
                  _r.aropen_doctype || '-' || _r.aropen_docnumber,
                  getGainLossAccntId(
-                   CASE WHEN _r.aropen_doctype != 'R' THEN _arAccntid
-                   ELSE findDeferredAccount(_p.cashrcpt_cust_id) END
+                   CASE WHEN _r.aropen_doctype != 'R' THEN getPrjAccntId(_p.cashrcpt_prj_id, _arAccntid)
+                   ELSE getPrjAccntId(_p.cashrcpt_prj_id, findDeferredAccount(_p.cashrcpt_cust_id)) END
                  ), round(_exchGain, 2) * -1,
                  _p.cashrcpt_distdate, _p.custnote, pCashrcptid);
       END IF;
@@ -303,7 +303,7 @@ BEGIN
       _p.applydate, _p.cashrcpt_distdate, pJournalNumber, getEffectiveXtUser(),
       _r.cashrcpt_curr_id, 'CRD', _r.cashrcptmisc_id );
     PERFORM insertIntoGLSeries( _sequence, 'A/R', 'CR', _r.cashrcptmisc_notes,
-                                _r.cashrcptmisc_accnt_id,
+                                getPrjAccntId(_p.cashrcpt_prj_id, _r.cashrcptmisc_accnt_id),
                                 round(_r.cashrcptmisc_amount_base, 2),
                                 _p.cashrcpt_distdate, _p.custnote, pCashrcptid );
 
@@ -323,7 +323,7 @@ BEGIN
     _comment := ('Unapplied from ' || _p.cashrcpt_fundstype || '-' || _p.cashrcpt_docnumber);
     PERFORM insertIntoGLSeries( _sequence, 'A/R', 'CR',
                                 _comment,
-                                _p.prepaid_accnt_id,
+                                getPrjAccntId(_p.cashrcpt_prj_id, _p.prepaid_accnt_id),
                                 round(_p.cashrcpt_amount_base, 2) -
                                                         round(_posted_base, 2),
                                 _p.cashrcpt_distdate, _p.custnote, pCashrcptid );
@@ -367,7 +367,7 @@ BEGIN
     
     PERFORM insertIntoGLSeries(_sequence, 'A/R', 'CR',
                    'Currency Exchange Rounding - ' || _p.cashrcpt_docnumber,
-                   getGainLossAccntId(_debitAccntid),
+                   getPrjAccntId(_p.cashrcpt_prj_id, getGainLossAccntId(_debitAccntid)),
                    round(_posted_base, 2) - round((_p.cashrcpt_amount_base + _p.cashrcpt_discount_base), 2),
                    _p.cashrcpt_distdate, _p.custnote, pCashrcptid);
   END IF;
@@ -375,7 +375,7 @@ BEGIN
 --  Debit Cash
   PERFORM insertIntoGLSeries( _sequence, 'A/R', 'CR',
                     (_p.cashrcpt_fundstype || '-' || _p.cashrcpt_docnumber),
-                     _debitAccntid, round(_p.cashrcpt_amount_base, 2) * -1,
+                     getPrjAccntId(_p.cashrcpt_prj_id, _debitAccntid), round(_p.cashrcpt_amount_base, 2) * -1,
                      _p.cashrcpt_distdate,
                      _p.custnote, pCashrcptid );
 
@@ -389,12 +389,12 @@ BEGIN
     IF (_exchGain <> 0) THEN
       PERFORM insertIntoGLSeries( _sequence, 'A/R', 'CR',
                           (_p.cashrcpt_fundstype || '-' || _p.cashrcpt_docnumber),
-                          _debitAccntid, (_exchGain * -1.0),
+                          getPrjAccntId(_p.cashrcpt_prj_id, _debitAccntid), (_exchGain * -1.0),
                           _p.cashrcpt_distdate, _p.custnote, pCashrcptid );
 
       PERFORM insertIntoGLSeries( _sequence, 'A/R', 'CR',
                           (_p.cashrcpt_fundstype || '-' || _p.cashrcpt_docnumber),
-                          getGainLossAccntId(_debitAccntid), _exchGain,
+                          getPrjAccntId(_p.cashrcpt_prj_id, getGainLossAccntId(_debitAccntid)), _exchGain,
                           _p.cashrcpt_distdate, _p.custnote, pCashrcptid );
     END IF;
   END IF;

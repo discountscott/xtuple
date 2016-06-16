@@ -60,7 +60,7 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
     buildAll.build({
       database: program.database,
       initialize: true,
-      source: path.join(__dirname, "../foundation-database/postbooks_demo_data.sql")
+      source: path.join(__dirname, "../foundation-database/demo_data.sql")
     }, done);
   };
   var buildExtensions = function (done) {

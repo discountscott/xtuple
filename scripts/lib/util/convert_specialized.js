@@ -43,8 +43,8 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
     insertSql = "select saveMetasql (" +
       "'" + group + "'," +
       "'" + name + "'," +
-      "$$" + notes + "$$," +
-      "$$" + content + "$$," +
+      "$notes$" + notes + "$notes$," +
+      "$content$" + content + "$content$," +
       "true, " + schema + ", " + grade + ");";
 
     return insertSql;
@@ -81,8 +81,8 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
                 "  if _grade is null then" +
                 "    insert into " + tableName + " (report_name, report_descrip," +
                 "        report_source, report_loaddate, report_grade)" +
-                "      select '" + name + "', $$" + description + "$$," +
-                "        $$" + content + "$$, now(), min(sequence_value)" +
+                "      select '" + name + "', $description$" + description + "$description$," +
+                "        $content$" + content + "$content$, now(), min(sequence_value)" +
                 "        from sequence" +
                 "       where sequence_value >= " + grade + "" +
                 "         and sequence_value not in (" +
@@ -91,8 +91,8 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
                 "       );" +
                 "  else " +
                 "    update " + tableName + " set" +
-                "      report_descrip = $$" + description + "$$," +
-                "      report_source = $$" + content + "$$," +
+                "      report_descrip = $description$" + description + "$description$," +
+                "      report_source = $content$" + content + "$content$," +
                 "      report_loaddate = now() " +
                 "     where report_name = '" + name + "'" +
                 "      and report_grade = _grade;" +
@@ -113,15 +113,15 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
     insertSql = "insert into " + tableName + " (script_name, script_order, script_enabled, " +
       "script_source, script_notes) select " +
       "'" + name + "', " + order + ", TRUE, " +
-      "$$" + content + "$$," +
+      "$content$" + content + "$content$," +
       "'" + notes + "'" +
       " where not exists (select c.script_id from " + tableName + " c " +
       "where script_name = '" + name + "' and script_order = " + order + ");";
 
     updateSql = "update " + tableName + " set " +
       "script_name = '" + name + "', script_order = " + order + ", script_enabled = TRUE, " +
-      "script_source = $$" + content +
-      "$$, script_notes = '" + notes + "' " +
+      "script_source = $content$" + content +
+      "$content$, script_notes = '" + notes + "' " +
       "where script_name = '" + name + "' and script_order = " + order + ";";
 
     return insertSql + updateSql;
@@ -139,14 +139,14 @@ regexp:true, undef:true, strict:true, trailing:true, white:true */
     insertSql = "insert into " + tableName + " (uiform_name, uiform_order, uiform_enabled, " +
       "uiform_source, uiform_notes) select " +
       "'" + name + "', " + order + ", TRUE, " +
-      "$$" + content + "$$," +
+      "$content$" + content + "$content$," +
       "'" + notes + "' " +
       " where not exists (select c.uiform_id from " + tableName + " c " +
       "where uiform_name = '" + name + "' and uiform_order = " + order + ");";
 
     updateSql = "update " + tableName + " set uiform_name = '" +
       name + "', uiform_order = " + order + ", uiform_enabled = TRUE, " +
-      "uiform_source = $$" + content + "$$, uiform_notes = '" + notes + "' " +
+      "uiform_source = $content$" + content + "$content$, uiform_notes = '" + notes + "' " +
       "where uiform_name = '" + name + "' and uiform_order = " + order + ";";
 
     return insertSql + updateSql;
