@@ -57,7 +57,7 @@ BEGIN
   ( quitem_quhead_id, quitem_linenumber, quitem_itemsite_id,
     quitem_scheddate, quitem_promdate, quitem_qtyord,
     quitem_price, quitem_custprice,
-	CASE WHEN (fetchMetricText('WholesalePriceCosting') = 't') THEN (select (item_listcost) from item where item_id=quitem_item_id) ELSE stdCost(itemsite_item_id) END,
+    CASE WHEN (fetchMetricText('WholesalePriceCosting') = 't') THEN (select (item_listcost) from item where item_id=quitem_item_id) ELSE stdCost(itemsite_item_id) END,
     quitem_qty_uom_id, quitem_price_uom_id,
     quitem_qty_invuomratio, quitem_price_invuomratio,
     quitem_memo, quitem_custpn, quitem_imported, quitem_taxtype_id,
